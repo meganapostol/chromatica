@@ -130,9 +130,8 @@ export default function SparkRing({ colors = [], hoveredAngle = null, active = t
       }
     }
     function fireBurstCluster() {
-      // 3–6 simultaneous bursts at random angles — actually feels like a
-      // celebration instead of one lonely firework at a time.
-      const n = 3 + Math.floor(Math.random() * 4);
+      // 4–8 simultaneous bursts at random angles — fast cadence celebration.
+      const n = 4 + Math.floor(Math.random() * 5);
       for (let i = 0; i < n; i++) {
         fireBurst(Math.random() * Math.PI * 2);
       }
@@ -211,15 +210,14 @@ export default function SparkRing({ colors = [], hoveredAngle = null, active = t
         else                   drawDot(x, y, p, alpha);
       }
 
-      // EXPLOSIONS — fire a cluster (3–6 simultaneous bursts) every 1.5–3s.
-      // Plus a 40% chance of a follow-up cluster ~250ms later for layered
-      // celebration energy.
+      // EXPLOSIONS — fast cadence. New cluster every 500–1100ms.
+      // 70% chance of a follow-up cluster ~180ms later, 35% chance of a
+      // second follow-up ~360ms later. Layered, constant celebration.
       if (now >= nextBurstAt) {
         fireBurstCluster();
-        if (Math.random() < 0.4) {
-          setTimeout(() => fireBurstCluster(), 240);
-        }
-        nextBurstAt = now + 1500 + Math.random() * 1500;
+        if (Math.random() < 0.7) setTimeout(() => fireBurstCluster(), 180);
+        if (Math.random() < 0.35) setTimeout(() => fireBurstCluster(), 360);
+        nextBurstAt = now + 500 + Math.random() * 600;
       }
       for (let i = bursts.length - 1; i >= 0; i--) {
         const e = bursts[i];
