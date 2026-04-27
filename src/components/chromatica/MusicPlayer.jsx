@@ -58,6 +58,10 @@ const MusicPlayer = forwardRef(function MusicPlayer(props, ref) {
     pause: () => { if (ready && playerRef.current) playerRef.current.pauseVideo(); },
     mute: () => { if (ready && playerRef.current) playerRef.current.mute(); },
     unmute: () => { if (ready && playerRef.current) playerRef.current.unMute(); },
+    getCurrentTime: () => {
+      if (!ready || !playerRef.current?.getCurrentTime) return 0;
+      try { return playerRef.current.getCurrentTime() || 0; } catch { return 0; }
+    },
     isReady: () => ready
   }), [ready]);
 

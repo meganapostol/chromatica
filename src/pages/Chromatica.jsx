@@ -2,10 +2,11 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import COLORS from '@/data/colors';
 import { resolveImage } from '@/data/imageMap';
-import ColorWheel from '@/components/chromatica/ColorWheel';
+import ColorWheel, { WHEEL_SIZE, WHEEL_VOID_RADIUS } from '@/components/chromatica/ColorWheel';
 import Chamber from '@/components/chromatica/Chamber';
 import MusicPlayer from '@/components/chromatica/MusicPlayer';
 import Credits from '@/components/chromatica/Credits';
+import LyricBurst from '@/components/chromatica/LyricBurst';
 
 export default function Chromatica() {
   const [selectedId, setSelectedId] = useState(null);
@@ -134,18 +135,32 @@ export default function Chromatica() {
             {/* WHEEL — dead-centered in viewport */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="pointer-events-auto">
-                <ColorWheel colors={colors} onSelect={handleSelect} exiting={exiting} />
+                <ColorWheel
+                  colors={colors}
+                  onSelect={handleSelect}
+                  exiting={exiting}
+                  burstSlot={
+                    <LyricBurst
+                      images={colors.map((c) => c.image).filter(Boolean)}
+                      getCurrentTime={() => playerRef.current?.getCurrentTime?.() || 0}
+                      size={WHEEL_SIZE}
+                      voidRadius={WHEEL_VOID_RADIUS}
+                    />
+                  }
+                />
               </div>
             </div>
 
-            {/* bottom invitation + toggles */}
+            {/* bottom invitation + toggles (invitation fades in after the wheel finishes assembling) */}
             <div className="absolute bottom-10 left-0 right-0 flex flex-col items-center gap-4 z-20">
-              <div
+              <motion.div
                 className="font-display italic"
                 style={{ fontSize: 13, color: 'rgba(250,250,250,0.6)' }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1, transition: { duration: 1.2, delay: 3.0 } }}
               >
                 click any color to enter her chamber
-              </div>
+              </motion.div>
               <div className="flex items-center gap-8">
                 <ToggleBtn active={musicMode} onClick={() => handleMusicMode(true)}>
                   with music

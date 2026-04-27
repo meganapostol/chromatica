@@ -153,9 +153,9 @@ export default function Chamber({ color, index, total, onBack, musicMode, allCol
             {...fadeUp(stagger.back)}
             onClick={onBack}
             className="self-start font-mono-c text-[11px] tracking-mono-tight uppercase"
-            style={{ color: 'rgba(250,250,250,0.6)' }}
+            style={{ color: '#F8F0E3', opacity: 0.7 }}
             onMouseEnter={(e) => e.currentTarget.style.color = color.hex}
-            onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(250,250,250,0.6)'}
+            onMouseLeave={(e) => e.currentTarget.style.color = '#F8F0E3'}
           >
             ← back to the wheel
           </motion.button>
@@ -164,7 +164,7 @@ export default function Chamber({ color, index, total, onBack, musicMode, allCol
             <motion.h1
               {...fadeUp(stagger.name)}
               className="font-display tracking-display-tight"
-              style={{ fontWeight: 600, fontSize: 80, lineHeight: 0.95, color: '#FAFAFA' }}
+              style={{ fontWeight: 600, fontSize: 80, lineHeight: 0.95, color: '#F8F0E3' }}
             >
               {color.name}
             </motion.h1>
@@ -179,7 +179,7 @@ export default function Chamber({ color, index, total, onBack, musicMode, allCol
 
           <motion.div {...fadeUp(stagger.etymology)}>
             <div className="hairline mb-8" style={{ backgroundColor: mixWithBg(color.hex, 0.4) + '26' }} />
-            <p className="font-body" style={{ fontSize: 18, lineHeight: 1.6, color: '#FAFAFA' }}>
+            <p className="font-body" style={{ fontSize: 18, lineHeight: 1.6, color: '#F8F0E3' }}>
               {color.etymology.narrative}
             </p>
           </motion.div>
@@ -187,7 +187,7 @@ export default function Chamber({ color, index, total, onBack, musicMode, allCol
           <motion.p
             {...fadeUp(stagger.voice)}
             className="font-display italic"
-            style={{ fontSize: 22, lineHeight: 1.4, color: 'rgba(250,250,250,0.8)', margin: '8px 0' }}
+            style={{ fontSize: 22, lineHeight: 1.4, color: '#F8F0E3', opacity: 0.9, margin: '8px 0' }}
           >
             {color.voice}
           </motion.p>
@@ -197,8 +197,8 @@ export default function Chamber({ color, index, total, onBack, musicMode, allCol
             <SectionLabel>where she lives in nature</SectionLabel>
             <ul className="space-y-2 mt-4">
               {color.nature.map((n, i) => (
-                <li key={i} className="font-body flex gap-3" style={{ fontSize: 18, lineHeight: 1.6, color: '#FAFAFA' }}>
-                  <span style={{ color: 'rgba(250,250,250,0.4)' }}>·</span>
+                <li key={i} className="font-body flex gap-3" style={{ fontSize: 18, lineHeight: 1.6, color: '#F8F0E3' }}>
+                  <span style={{ color: 'rgba(248,240,227,0.4)' }}>·</span>
                   <span>{n}</span>
                 </li>
               ))}
@@ -210,8 +210,8 @@ export default function Chamber({ color, index, total, onBack, musicMode, allCol
             <SectionLabel>where she lives in history</SectionLabel>
             <ul className="space-y-2 mt-4">
               {color.history.map((n, i) => (
-                <li key={i} className="font-body flex gap-3" style={{ fontSize: 18, lineHeight: 1.6, color: '#FAFAFA' }}>
-                  <span style={{ color: 'rgba(250,250,250,0.4)' }}>·</span>
+                <li key={i} className="font-body flex gap-3" style={{ fontSize: 18, lineHeight: 1.6, color: '#F8F0E3' }}>
+                  <span style={{ color: 'rgba(248,240,227,0.4)' }}>·</span>
                   <span>{n}</span>
                 </li>
               ))}

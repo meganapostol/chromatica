@@ -94,6 +94,16 @@
     50% { opacity: 1; }
   }
 
+  @keyframes lyric-burst-flash {
+    0% { opacity: 0.5; transform: scale(1.04); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes slab-assemble {
+    0% { opacity: 0; transform: scale(0.96); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
   .scroll-hide::-webkit-scrollbar { display: none; }
   .scroll-hide { scrollbar-width: none; }
 }
