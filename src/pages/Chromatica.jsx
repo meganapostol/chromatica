@@ -95,9 +95,9 @@ export default function Chromatica() {
 
   return (
     <div className="relative min-h-screen w-screen chromatica-vignette overflow-hidden">
-      {/* WHEEL STATE */}
-      <AnimatePresence>
-        {!selected && (
+      {/* WHEEL + CHAMBER share a single AnimatePresence so only one mounts at a time */}
+      <AnimatePresence mode="wait">
+        {!selected ? (
           <motion.div
             key="wheel-state"
             className="fixed inset-0 z-10 chromatica-vignette"
@@ -172,12 +172,7 @@ export default function Chromatica() {
               </div>
             </div>
           </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* CHAMBER STATE */}
-      <AnimatePresence mode="wait">
-        {selected && (
+        ) : (
           <Chamber
             key={selected.id}
             color={selected}
