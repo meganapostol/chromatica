@@ -102,7 +102,7 @@ export default function Chamber({ color, index, total, onBack, musicMode, allCol
       className="fixed inset-0 overflow-y-auto overflow-x-hidden scroll-hide"
       style={{ backgroundColor: tint }}
       initial={{ opacity: 0 }}
-      animate={{ opacity: 1, transition: { duration: 0.4, delay: 0.4 } }}
+      animate={{ opacity: 1, transition: { duration: 0.4 } }}
       exit={{ opacity: 0, transition: { duration: 0.4 } }}
     >
       {/* expanding stained gradient from center */}
