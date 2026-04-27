@@ -2,79 +2,95 @@ import React, { useEffect, useState, useRef } from 'react';
 
 // Centerpiece photomontage in the wheel's central void.
 //
-// Two intensity tiers:
-//   AMBIENT  — whenever music is playing, photos cycle slowly (~1 cut/sec)
-//              at low opacity. The void is always alive while the song is on.
-//   CHORUS   — inside any window in CHORUSES, photos cut fast (~5/sec) at full
-//              opacity for the whole window length, not a 3.5s phrase.
+// CHORUS-ONLY. While a chorus window is active, photos strobe at ~5 cuts/sec.
+// Outside choruses the void shows the VoidBlobs instead — no slow photo
+// cycling between choruses, that read as "weird" / generative.
 //
-// Approximate chorus windows for Miyazaki (Nature Version) by Paris Paloma.
-// **These are guesses — tune to taste against the actual track.**
+// Tuning: the chorus windows below are GUESSES against
+// "Miyazaki (The Nature Version)" by Paris Paloma. If they don't match
+// what you hear, edit start/end seconds. Press `B` while the wheel state
+// is up to manually fire a burst (3.5s) for visual testing without waiting.
 export const CHORUSES = [
   { start: 54,  end: 72  },
   { start: 115, end: 133 },
   { start: 188, end: 220 }
 ];
 
-const AMBIENT_CUT_MS = 1100;   // ~0.9 cuts/sec — slow, contemplative
-const CHORUS_CUT_MS  = 200;    // ~5 cuts/sec — strobing
-const AMBIENT_OPACITY = 0.30;
-const CHORUS_OPACITY  = 1.0;
+const CUT_INTERVAL_MS = 200;        // ~5 cuts/sec during chorus
+const MANUAL_BURST_MS = 3500;       // length of a 'B'-key triggered burst
 
 export default function LyricBurst({ images = [], getCurrentTime, voidRadius, size = 720 }) {
-  const [mode, setMode] = useState('off'); // 'off' | 'ambient' | 'chorus'
+  const [active, setActive] = useState(false);
   const [imgIndex, setImgIndex] = useState(0);
   const cutTimerRef = useRef(null);
+  const manualEndTimerRef = useRef(null);
 
-  // Poll the player time and pick the right intensity tier.
+  // Helpers ------------------------------------------------------------
+  const startCutting = () => {
+    clearInterval(cutTimerRef.current);
+    setImgIndex(Math.floor(Math.random() * Math.max(images.length, 1)));
+    cutTimerRef.current = setInterval(() => {
+      setImgIndex((i) => {
+        if (!images.length) return 0;
+        return (i + 1 + Math.floor(Math.random() * (images.length - 1))) % images.length;
+      });
+    }, CUT_INTERVAL_MS);
+  };
+  const stopCutting = () => clearInterval(cutTimerRef.current);
+
+  // Poll the YT player time. Active iff currentTime is inside any chorus window.
   useEffect(() => {
     if (!images.length) return;
-
-    const setCutInterval = (ms) => {
-      clearInterval(cutTimerRef.current);
-      cutTimerRef.current = setInterval(() => {
-        setImgIndex((i) => (i + 1 + Math.floor(Math.random() * (images.length - 1))) % images.length);
-      }, ms);
-    };
-
+    let manualHold = false;
     const poll = setInterval(() => {
       let t;
       try { t = getCurrentTime?.(); } catch { return; }
+      if (manualHold) return; // manual burst takes precedence
       if (typeof t !== 'number' || isNaN(t) || t <= 0) {
-        // No music → no montage.
-        if (mode !== 'off') {
-          clearInterval(cutTimerRef.current);
-          setMode('off');
+        if (active) {
+          stopCutting();
+          setActive(false);
         }
         return;
       }
-
       const inChorus = CHORUSES.some((c) => t >= c.start && t <= c.end);
-      const next = inChorus ? 'chorus' : 'ambient';
-      if (next !== mode) {
-        if (mode === 'off' || next === 'chorus' || (mode === 'chorus' && next === 'ambient')) {
-          setImgIndex(Math.floor(Math.random() * images.length));
-          setCutInterval(next === 'chorus' ? CHORUS_CUT_MS : AMBIENT_CUT_MS);
-        }
-        setMode(next);
-      }
-    }, 200);
+      setActive((wasActive) => {
+        if (inChorus && !wasActive) startCutting();
+        if (!inChorus && wasActive) stopCutting();
+        return inChorus;
+      });
+    }, 150);
+
+    // Manual fire via 'B' keypress — useful to verify the burst works
+    // without sitting through 54s of intro.
+    const onKey = (e) => {
+      if (e.key !== 'b' && e.key !== 'B') return;
+      manualHold = true;
+      startCutting();
+      setActive(true);
+      clearTimeout(manualEndTimerRef.current);
+      manualEndTimerRef.current = setTimeout(() => {
+        stopCutting();
+        setActive(false);
+        manualHold = false;
+      }, MANUAL_BURST_MS);
+    };
+    window.addEventListener('keydown', onKey);
 
     return () => {
       clearInterval(poll);
-      clearInterval(cutTimerRef.current);
+      stopCutting();
+      clearTimeout(manualEndTimerRef.current);
+      window.removeEventListener('keydown', onKey);
     };
-  }, [images, getCurrentTime, mode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [images, getCurrentTime]);
 
-  if (mode === 'off' || !images.length) return null;
+  if (!active || !images.length) return null;
 
   const cx = size / 2;
   const cy = size / 2;
   const r = voidRadius;
-  const opacity = mode === 'chorus' ? CHORUS_OPACITY : AMBIENT_OPACITY;
-  const sat = mode === 'chorus' ? 1.35 : 1.10;
-  const bright = mode === 'chorus' ? 1.10 : 0.95;
-  const rim = mode === 'chorus' ? 0.55 : 0.18;
 
   return (
     <svg
@@ -87,13 +103,7 @@ export default function LyricBurst({ images = [], getCurrentTime, voidRadius, si
           <circle cx={cx} cy={cy} r={r} />
         </clipPath>
       </defs>
-      <g
-        clipPath="url(#lyric-burst-clip)"
-        style={{
-          opacity,
-          transition: 'opacity 0.5s ease-out'
-        }}
-      >
+      <g clipPath="url(#lyric-burst-clip)">
         <image
           href={images[imgIndex]}
           x={cx - r}
@@ -102,14 +112,12 @@ export default function LyricBurst({ images = [], getCurrentTime, voidRadius, si
           height={r * 2}
           preserveAspectRatio="xMidYMid slice"
           style={{
-            filter: `saturate(${sat}) brightness(${bright})`,
-            animation: mode === 'chorus'
-              ? 'lyric-burst-flash 80ms ease-out'
-              : 'lyric-burst-flash 600ms ease-out'
+            filter: 'saturate(1.35) brightness(1.10)',
+            animation: 'lyric-burst-flash 80ms ease-out'
           }}
         />
-        {/* Rim ring — bright on chorus, soft on ambient */}
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#FAFAFA" strokeWidth="1.5" opacity={rim} />
+        {/* Bright ignition rim */}
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#FAFAFA" strokeWidth="1.5" opacity="0.55" />
       </g>
     </svg>
   );

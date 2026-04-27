@@ -240,20 +240,19 @@ function ToggleBtn({ active, onClick, children }) {
 
 // Painted CHROMATICA wordmark — Megan's hand-lettered logo, breathing softly.
 // The PNG lives in /public/Biro Script Plus.png (transparent BG, 2000×500).
-// Typographic wordmark: Cormorant Garamond italic (the chamber display face)
-// at a confident 38px, with each letter independently cycling through the
+// Typographic wordmark: Sacramento (love-letter calligraphic script)
+// at a confident 48px, with each letter independently cycling through the
 // wheel's palette on a phase-offset 18s loop.
 function ChromaticaWordmark() {
   const letters = 'Chromatica'.split('');
   return (
     <div
-      className="absolute top-5 left-7 z-20 select-none"
+      className="absolute top-3 left-7 z-20 select-none"
       style={{
-        fontFamily: "'Cormorant Garamond', serif",
-        fontSize: 38,
-        fontStyle: 'italic',
-        fontWeight: 600,
-        letterSpacing: '0.005em',
+        fontFamily: "'Sacramento', cursive",
+        fontSize: 48,
+        fontWeight: 400,
+        letterSpacing: '0.015em',
         lineHeight: 1,
         animation: 'chromatica-logo-breathe 7s ease-in-out infinite'
       }}

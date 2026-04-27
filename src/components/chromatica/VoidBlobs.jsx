@@ -1,72 +1,96 @@
 import React from 'react';
 
-// Animated chromatic life inside the wheel's central void.
-// Three layers stacked with mix-blend-mode: screen.
-//   1. Slow conic gradient — the full hue circle, rotating
-//   2. Counter-rotating radial blobs — depth and asymmetry
-//   3. Soft inner core glow — keeps the very centre warm
+// Organic chromatic ring blobs spinning inside the wheel's central area.
 //
-// All decorative, pointer-events-none, clipped to a circle by the
-// ColorWheel voidSlot wrapper.
+// Faithful to the original AnimatedBlobs technique: each "blob" is a span
+// with an asymmetric border-radius (gives the organic shape) and a thick
+// transparent border. A two-layer CSS mask hollows out the inside, so what
+// you see is a thick wobbly ring of color, not a filled shape.
+// All four spans share the same gridArea so they stack; the parent rotates
+// them as a group, then each blob tilts at its own angle inside.
+//
+// mix-blend-mode: screen lets the rings layer into a soft prismatic
+// gradient where they overlap.
 export default function VoidBlobs() {
+  const blobStyle = {
+    aspectRatio: '1',
+    display: 'block',
+    gridArea: 'stack',
+    backgroundSize: 'calc(100% + 10%)',
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'center',
+    border: '8% solid transparent',
+    borderRadius: '115% 140% 145% 110% / 125% 140% 110% 125%',
+    maskImage: 'linear-gradient(transparent, transparent), linear-gradient(black, white)',
+    WebkitMaskImage: 'linear-gradient(transparent, transparent), linear-gradient(black, white)',
+    maskClip: 'padding-box, border-box',
+    WebkitMaskClip: 'padding-box, border-box',
+    maskComposite: 'intersect',
+    WebkitMaskComposite: 'source-in',
+    mixBlendMode: 'screen',
+    width: '92%',
+    filter: 'blur(0.6%)'
+  };
+
+  const blobs = [
+    {
+      // warm — cinnabar / saffron
+      backgroundImage: 'linear-gradient(#E34234, #F2A900, #E34234)',
+      transform: 'rotate(30deg) scale(1.03)'
+    },
+    {
+      // cool — klein / maya
+      backgroundImage: 'linear-gradient(#002FA7, #5BB7E5, #002FA7)',
+      transform: 'rotate(60deg) scale(0.95)'
+    },
+    {
+      // forest — malachite / chartreuse
+      backgroundImage: 'linear-gradient(#2E8B57, #C0D725, #2E8B57)',
+      transform: 'rotate(90deg) scale(0.97)'
+    },
+    {
+      // bloom — mauveine / cochineal
+      backgroundImage: 'linear-gradient(#8E4585, #DC143C, #8E4585)',
+      transform: 'rotate(120deg) scale(1.02)'
+    }
+  ];
+
   return (
     <div
       style={{
         width: '100%',
         height: '100%',
-        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         overflow: 'hidden',
         borderRadius: '50%'
       }}
       aria-hidden="true"
     >
-      {/* Layer 1: conic-gradient rainbow, slow clockwise */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: '-15%',
-          background:
-            'conic-gradient(from 0deg at 50% 50%, ' +
-            '#E34234 0%, #F2A900 14%, #C0D725 28%, #2E8B57 42%, ' +
-            '#5BB7E5 56%, #1F4788 70%, #8E4585 84%, #DC143C 100%)',
-          filter: 'blur(28px) saturate(1.05)',
-          mixBlendMode: 'screen',
-          opacity: 0.55,
-          animation: 'chromatica-blobs-spin 32s linear infinite',
-          transformOrigin: 'center center'
-        }}
-      />
-
-      {/* Layer 2: counter-rotating radial blobs for depth */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: '-10%',
-          background:
-            'radial-gradient(circle at 28% 32%, rgba(227, 66, 52, 0.55), transparent 40%),' +
-            'radial-gradient(circle at 72% 28%, rgba(0, 47, 167, 0.55), transparent 42%),' +
-            'radial-gradient(circle at 70% 72%, rgba(46, 139, 87, 0.50), transparent 42%),' +
-            'radial-gradient(circle at 28% 72%, rgba(142, 69, 133, 0.55), transparent 42%)',
-          filter: 'blur(18px)',
-          mixBlendMode: 'screen',
-          opacity: 0.85,
-          animation: 'chromatica-blobs-spin 22s linear infinite reverse',
-          transformOrigin: 'center center'
-        }}
-      />
-
-      {/* Layer 3: warm inner core so the very centre never reads as black */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background:
-            'radial-gradient(circle at 50% 50%, rgba(248, 200, 140, 0.30) 0%, rgba(120, 60, 70, 0.20) 35%, transparent 70%)',
-          mixBlendMode: 'screen',
-          animation: 'chromatica-void-breathe 14s ease-in-out infinite',
-          transformOrigin: 'center center'
-        }}
-      />
+      <div style={{ display: 'grid', gridTemplateAreas: "'stack'", width: '100%', height: '100%' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateAreas: "'stack'",
+            gridArea: 'stack',
+            width: '100%',
+            height: '100%',
+            placeItems: 'center',
+            animation: 'chromatica-blobs-spin 14s linear infinite'
+          }}
+        >
+          {blobs.map((blob, i) => (
+            <span
+              key={i}
+              style={{
+                ...blobStyle,
+                ...blob
+              }}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
