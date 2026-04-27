@@ -89,6 +89,11 @@
   }
   .chromatic-breathe { animation: chromatic-breathe 8s ease-in-out infinite; }
 
+  @keyframes chromatica-glyph-pulse {
+    0%, 100% { opacity: 0.65; }
+    50% { opacity: 1; }
+  }
+
   .scroll-hide::-webkit-scrollbar { display: none; }
   .scroll-hide { scrollbar-width: none; }
 }

@@ -35,6 +35,7 @@ export default function ColorWheel({ colors = [], onSelect, exiting = false }) {
   const rInnerColor = SIZE * 0.31;
   const rGlyph = SIZE * 0.27;
   const rVoid = SIZE * 0.18;
+  const CREAM = '#F8F0E3';
 
   const sectorAngle = 360 / TOTAL_SECTORS;
   const gap = 1.5; // degrees gap between sectors
@@ -87,7 +88,50 @@ export default function ColorWheel({ colors = [], onSelect, exiting = false }) {
               </feMerge>
             </filter>
           ))}
+          {/* Warm-cream glow filter for the structural ring tracks */}
+          <filter id="track-glow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="3" />
+          </filter>
+          {/* Center void radial gradient: warm charcoal with depth */}
+          <radialGradient id="void-gradient" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#15131A" />
+            <stop offset="55%" stopColor="#0D0C12" />
+            <stop offset="100%" stopColor="#050508" />
+          </radialGradient>
+          {/* Soft cream pulse for individual glyphs */}
+          <filter id="glyph-glow" x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="2.4" result="b" />
+            <feMerge>
+              <feMergeNode in="b" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
         </defs>
+
+        {/* Warm-cream luminous tracks beneath the color ring */}
+        <circle
+          cx={cx} cy={cy} r={rOuterColor + 4}
+          fill="none" stroke={CREAM} strokeWidth="1.2"
+          opacity="0.10"
+          style={{ filter: 'url(#track-glow)' }}
+        />
+        <circle
+          cx={cx} cy={cy} r={rOuterColor + 4}
+          fill="none" stroke={CREAM} strokeWidth="0.6"
+          opacity="0.18"
+          strokeDasharray="2 5"
+        />
+        <circle
+          cx={cx} cy={cy} r={rInnerColor - 4}
+          fill="none" stroke={CREAM} strokeWidth="1.2"
+          opacity="0.10"
+          style={{ filter: 'url(#track-glow)' }}
+        />
+        <circle
+          cx={cx} cy={cy} r={rInnerColor - 4}
+          fill="none" stroke={CREAM} strokeWidth="0.6"
+          opacity="0.16"
+        />
 
         {/* Color ring */}
         <g className="rotate-color-ring" style={{ transformOrigin: `${cx}px ${cy}px` }}>
@@ -151,16 +195,23 @@ export default function ColorWheel({ colors = [], onSelect, exiting = false }) {
             const angle = (i / 24) * 360;
             const p = polar(cx, cy, rGlyph, angle);
             const glyph = GLYPHS[i % GLYPHS.length];
+            // Each glyph slightly out of phase with its neighbours.
+            const phaseDelay = (i * 0.18).toFixed(2);
             return (
               <text
                 key={`glyph-${i}`}
                 x={p.x}
                 y={p.y}
-                fontSize="14"
-                fill="rgba(252, 247, 232, 0.48)"
+                fontSize="19"
+                fill={CREAM}
                 textAnchor="middle"
                 dominantBaseline="middle"
-                style={{ fontFamily: 'JetBrains Mono, monospace', userSelect: 'none' }}
+                style={{
+                  fontFamily: 'JetBrains Mono, monospace',
+                  userSelect: 'none',
+                  filter: 'url(#glyph-glow)',
+                  animation: `chromatica-glyph-pulse 3.6s ease-in-out ${phaseDelay}s infinite`
+                }}
                 transform={`rotate(${angle} ${p.x} ${p.y})`}
               >
                 {glyph}
@@ -169,9 +220,9 @@ export default function ColorWheel({ colors = [], onSelect, exiting = false }) {
           })}
         </g>
 
-        {/* Center void */}
-        <circle cx={cx} cy={cy} r={rVoid} fill="#050508" />
-        <circle cx={cx} cy={cy} r={rVoid} fill="none" stroke="rgba(250,250,250,0.08)" strokeWidth="1" />
+        {/* Center void: warm charcoal with radial depth */}
+        <circle cx={cx} cy={cy} r={rVoid} fill="url(#void-gradient)" />
+        <circle cx={cx} cy={cy} r={rVoid} fill="none" stroke={CREAM} strokeWidth="0.8" opacity="0.12" />
       </svg>
     </div>
   );

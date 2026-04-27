@@ -9,11 +9,52 @@ import Credits from '@/components/chromatica/Credits';
 
 export default function Chromatica() {
   const [selectedId, setSelectedId] = useState(null);
-  const [musicMode, setMusicMode] = useState(false);
+  const [musicMode, setMusicMode] = useState(true); // default WITH MUSIC
   const [creditsOpen, setCreditsOpen] = useState(false);
   const [exiting, setExiting] = useState(false); // wheel particles flag for dissolve
 
   const playerRef = useRef(null);
+
+  // Autoplay-muted on mount, then unmute on first user interaction (any
+  // click/scroll/keypress). Most browsers permit muted autoplay; the unmute
+  // is gated by interaction to satisfy autoplay-with-sound policies.
+  useEffect(() => {
+    const tryAutoplay = () => {
+      if (!playerRef.current?.isReady?.()) return false;
+      playerRef.current.mute();
+      playerRef.current.play();
+      return true;
+    };
+    // Poll briefly until the YT player is ready, then start muted playback.
+    const poll = setInterval(() => {
+      if (tryAutoplay()) clearInterval(poll);
+    }, 200);
+
+    let unmuted = false;
+    const handleFirstInteraction = () => {
+      if (unmuted) return;
+      unmuted = true;
+      if (musicMode && playerRef.current?.isReady?.()) {
+        playerRef.current.unmute();
+        playerRef.current.play();
+      }
+    };
+    window.addEventListener('click', handleFirstInteraction, { once: true });
+    window.addEventListener('keydown', handleFirstInteraction, { once: true });
+    window.addEventListener('scroll', handleFirstInteraction, { once: true, passive: true });
+    window.addEventListener('wheel', handleFirstInteraction, { once: true, passive: true });
+    window.addEventListener('touchstart', handleFirstInteraction, { once: true, passive: true });
+
+    return () => {
+      clearInterval(poll);
+      window.removeEventListener('click', handleFirstInteraction);
+      window.removeEventListener('keydown', handleFirstInteraction);
+      window.removeEventListener('scroll', handleFirstInteraction);
+      window.removeEventListener('wheel', handleFirstInteraction);
+      window.removeEventListener('touchstart', handleFirstInteraction);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Resolve image paths once.
   const colors = useMemo(
