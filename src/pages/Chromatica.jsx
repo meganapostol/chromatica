@@ -8,7 +8,7 @@ import MusicPlayer from '@/components/chromatica/MusicPlayer';
 import Credits from '@/components/chromatica/Credits';
 import LyricBurst from '@/components/chromatica/LyricBurst';
 import HeroBackdrop from '@/components/chromatica/HeroBackdrop';
-import SparkRing from '@/components/chromatica/SparkRing';
+import InteractiveDots from '@/components/chromatica/InteractiveDots';
 import VoidBlobs from '@/components/chromatica/VoidBlobs';
 
 // Drop a video at chromatica/public/hero.mp4 and uncomment the videoSrc below
@@ -60,8 +60,6 @@ export default function Chromatica() {
 
   // Stable callbacks so child effects don't re-fire on every parent render.
   // (Credits.jsx and ColorWheel both depend on these.)
-  const [hoverAngle, setHoverAngle] = useState(null); // wheel hover → sparks intensify
-
   const handleSelect = useCallback((id) => setSelectedId(id), []);
   const handleBack = useCallback(() => setSelectedId(null), []);
   const handleCloseCredits = useCallback(() => setCreditsOpen(false), []);
@@ -85,20 +83,11 @@ export default function Chromatica() {
       {/* AMBIENT HERO — drifting aurora (or video, if HERO_VIDEO_SRC is set) */}
       <HeroBackdrop videoSrc={HERO_VIDEO_SRC} />
 
-      {/* VIEWPORT-LEVEL SPARKLE LAYER — unbounded by the wheel's box.
-          Always mounted (canvas is cheap); we fade it via opacity instead of
-          unmounting, because conditionally unmounting a sibling at the same
-          commit as AnimatePresence's wheel↔chamber swap was crashing React's
-          reconciler with insertBefore errors. */}
-      <div
-        style={{
-          opacity: selected ? 0 : 1,
-          transition: 'opacity 0.4s ease-out',
-          pointerEvents: 'none'
-        }}
-      >
-        <SparkRing colors={colors} hoveredAngle={hoverAngle} />
-      </div>
+      {/* INTERACTIVE DOT GRID — Chromatica-palette dots that repel from the
+          cursor. Replaces the previous starfield. Always mounted so the DOM
+          tree is stable through chamber transitions; faded via the `active`
+          prop when a chamber is open. */}
+      <InteractiveDots active={!selected} />
 
       {/* WHEEL — always mounted, faded by CSS when a chamber is open.
           We deliberately do NOT use AnimatePresence to swap wheel↔chamber:
@@ -136,7 +125,6 @@ export default function Chromatica() {
             <ColorWheel
               colors={colors}
               onSelect={handleSelect}
-              onHoverAngle={setHoverAngle}
               voidSlot={<VoidBlobs />}
               burstSlot={
                 <LyricBurst
