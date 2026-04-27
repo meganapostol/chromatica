@@ -106,11 +106,21 @@ export default function Chromatica() {
           transition: 'opacity 0.4s ease-out'
         }}
       >
-        {/* TOP NAV — music player sits top-left (in MusicPlayer.jsx itself).
-            This nav holds: [logo, dead-centered] [toggle | credits, right]. */}
+        {/* TOP NAV — a real header bar with its own translucent background,
+            hairline divider, and backdrop blur. Holds: [music player anchored
+            top-left in MusicPlayer.jsx] [logo dead-centered] [toggle | credits]. */}
         <div
           className="fixed left-0 right-0 z-30 flex items-center"
-          style={{ top: 0, height: 84, padding: '0 28px' }}
+          style={{
+            top: 0,
+            height: 84,
+            padding: '0 28px',
+            backgroundColor: 'rgba(10, 8, 14, 0.62)',
+            backdropFilter: 'blur(14px) saturate(1.1)',
+            WebkitBackdropFilter: 'blur(14px) saturate(1.1)',
+            borderBottom: '1px solid rgba(248, 240, 227, 0.12)',
+            boxShadow: '0 6px 24px rgba(0, 0, 0, 0.35)'
+          }}
         >
           {/* spacer for the music player on the left so the centered logo
               isn't visually shoved off-axis */}
