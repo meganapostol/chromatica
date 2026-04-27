@@ -96,14 +96,10 @@ export default function Chamber({ color, index, total, onBack, musicMode, allCol
   const tint = mixWithBg(color.hex, 0.06);
 
   return (
-    <motion.div
-      key={color.id}
+    <div
       ref={containerRef}
       className="fixed inset-0 overflow-y-auto overflow-x-hidden scroll-hide"
       style={{ backgroundColor: tint }}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1, transition: { duration: 0.4 } }}
-      exit={{ opacity: 0, transition: { duration: 0.4 } }}
     >
       {/* expanding stained gradient from center */}
       <motion.div
@@ -249,7 +245,7 @@ export default function Chamber({ color, index, total, onBack, musicMode, allCol
           </motion.div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 

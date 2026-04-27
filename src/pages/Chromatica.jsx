@@ -81,11 +81,14 @@ export default function Chromatica() {
       {/* AMBIENT HERO — drifting aurora (or video, if HERO_VIDEO_SRC is set) */}
       <HeroBackdrop videoSrc={HERO_VIDEO_SRC} />
 
-      {/* WHEEL + CHAMBER share a single AnimatePresence so only one mounts at a time */}
-      <AnimatePresence mode="wait">
+      {/* WHEEL + CHAMBER share a single AnimatePresence so only one mounts at a time.
+          Keys are intentionally just "wheel" / "chamber" (NOT the color id) — switching
+          between companion colors should re-render Chamber in place, not unmount it.
+          Unmounting on every companion click is what was crashing AnimatePresence. */}
+      <AnimatePresence mode="wait" initial={false}>
         {!selected ? (
           <motion.div
-            key="wheel-state"
+            key="wheel"
             className="fixed inset-0 z-10"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1, transition: { duration: 0.5 } }}
@@ -158,16 +161,22 @@ export default function Chromatica() {
             </div>
           </motion.div>
         ) : (
-          <Chamber
-            key={selected.id}
-            color={selected}
-            index={selectedIndex >= 0 ? selectedIndex : 0}
-            total={30}
-            onBack={handleBack}
-            musicMode={musicMode}
-            allColors={colors}
-            onSelectCompanion={handleSelectCompanion}
-          />
+          <motion.div
+            key="chamber"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1, transition: { duration: 0.4 } }}
+            exit={{ opacity: 0, transition: { duration: 0.4 } }}
+          >
+            <Chamber
+              color={selected}
+              index={selectedIndex >= 0 ? selectedIndex : 0}
+              total={30}
+              onBack={handleBack}
+              musicMode={musicMode}
+              allColors={colors}
+              onSelectCompanion={handleSelectCompanion}
+            />
+          </motion.div>
         )}
       </AnimatePresence>
 
