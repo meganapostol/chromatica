@@ -7,13 +7,16 @@ import React, { useEffect, useState, useRef } from 'react';
 // cycling between choruses, that read as "weird" / generative.
 //
 // Tuning: the chorus windows below are GUESSES against
-// "Miyazaki (The Nature Version)" by Paris Paloma. If they don't match
-// what you hear, edit start/end seconds. Press `B` while the wheel state
-// is up to manually fire a burst (3.5s) for visual testing without waiting.
+// "Miyazaki (The Nature Version)" by Paris Paloma. The first chorus
+// begins on the line "I won't let you take it from me, changes the
+// colour with the air that I breathe". To capture exact timestamps,
+// click "with music", play through, and press `T` at the start and
+// end of each chorus — the values get logged to the console (and to
+// `window.__chromaticaChorusMarks`). Edit the array below to match.
 export const CHORUSES = [
-  { start: 54,  end: 72  },
-  { start: 115, end: 133 },
-  { start: 188, end: 220 }
+  { start: 48,  end: 70  },
+  { start: 110, end: 132 },
+  { start: 180, end: 218 }
 ];
 
 const CUT_INTERVAL_MS = 200;        // ~5 cuts/sec during chorus
@@ -61,19 +64,33 @@ export default function LyricBurst({ images = [], getCurrentTime, voidRadius, si
       });
     }, 150);
 
-    // Manual fire via 'B' keypress — useful to verify the burst works
-    // without sitting through 54s of intro.
+    // 'B' = fire a manual 3.5s burst (visual test).
+    // 'T' = log the player's current time so timestamps can be captured
+    //       while listening. Logs to console + appends to
+    //       window.__chromaticaChorusMarks for easy copy-paste.
     const onKey = (e) => {
-      if (e.key !== 'b' && e.key !== 'B') return;
-      manualHold = true;
-      startCutting();
-      setActive(true);
-      clearTimeout(manualEndTimerRef.current);
-      manualEndTimerRef.current = setTimeout(() => {
-        stopCutting();
-        setActive(false);
-        manualHold = false;
-      }, MANUAL_BURST_MS);
+      if (e.key === 'b' || e.key === 'B') {
+        manualHold = true;
+        startCutting();
+        setActive(true);
+        clearTimeout(manualEndTimerRef.current);
+        manualEndTimerRef.current = setTimeout(() => {
+          stopCutting();
+          setActive(false);
+          manualHold = false;
+        }, MANUAL_BURST_MS);
+        return;
+      }
+      if (e.key === 't' || e.key === 'T') {
+        let now;
+        try { now = getCurrentTime?.(); } catch { return; }
+        if (typeof now !== 'number') return;
+        if (!window.__chromaticaChorusMarks) window.__chromaticaChorusMarks = [];
+        window.__chromaticaChorusMarks.push(Number(now.toFixed(2)));
+        // eslint-disable-next-line no-console
+        console.log('[chromatica] chorus mark:', now.toFixed(2),
+          '| all marks:', window.__chromaticaChorusMarks);
+      }
     };
     window.addEventListener('keydown', onKey);
 

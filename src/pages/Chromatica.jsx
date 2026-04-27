@@ -11,6 +11,7 @@ import HeroBackdrop from '@/components/chromatica/HeroBackdrop';
 import InteractiveDots from '@/components/chromatica/InteractiveDots';
 import SparkRing from '@/components/chromatica/SparkRing';
 import VoidBlobs from '@/components/chromatica/VoidBlobs';
+import GuideAgent from '@/components/chromatica/GuideAgent';
 
 // Drop a video at chromatica/public/hero.mp4 and uncomment the videoSrc below
 // to swap the aurora gradient for cinematic footage.
@@ -105,22 +106,79 @@ export default function Chromatica() {
           transition: 'opacity 0.4s ease-out'
         }}
       >
-        {/* top-left animated wordmark */}
-        <ChromaticaWordmark />
+        {/* TOP NAV — music player sits top-left (in MusicPlayer.jsx itself).
+            This nav holds: [logo, dead-centered] [toggle | credits, right]. */}
+        <div
+          className="fixed left-0 right-0 z-30 flex items-center"
+          style={{ top: 0, height: 84, padding: '0 28px' }}
+        >
+          {/* spacer for the music player on the left so the centered logo
+              isn't visually shoved off-axis */}
+          <div style={{ flex: 1 }} />
 
-        {/* top-right meta */}
-        <div className="absolute top-6 right-8 z-20 flex items-center gap-6">
-          <button
-            type="button"
-            onClick={openCredits}
-            className="font-mono-c uppercase tracking-mono"
-            style={{ fontSize: 11, color: 'rgba(248,240,227,0.6)' }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(248,240,227,1)')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(248,240,227,0.6)')}
-          >
-            credits
-          </button>
+          {/* CHROMATICA wordmark, true center */}
+          <div style={{ flex: '0 0 auto', display: 'flex', justifyContent: 'center' }}>
+            <ChromaticaWordmark />
+          </div>
+
+          {/* right: with music / in silence + credits */}
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 24 }}>
+            <div
+              className="flex items-center gap-4"
+              style={{
+                padding: '7px 18px',
+                borderRadius: 9999,
+                backgroundColor: 'rgba(15, 12, 18, 0.55)',
+                border: '1px solid rgba(248, 240, 227, 0.14)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)'
+              }}
+            >
+              <ToggleBtn active={musicMode} onClick={enableMusic}>
+                with music
+              </ToggleBtn>
+              <span style={{ color: 'rgba(248,240,227,0.28)', fontSize: 12 }}>·</span>
+              <ToggleBtn active={!musicMode} onClick={disableMusic}>
+                in silence
+              </ToggleBtn>
+            </div>
+            <button
+              type="button"
+              onClick={openCredits}
+              className="font-mono-c uppercase tracking-mono"
+              style={{ fontSize: 11, color: 'rgba(248,240,227,0.7)' }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(248,240,227,1)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(248,240,227,0.7)')}
+            >
+              credits
+            </button>
+          </div>
         </div>
+
+        {/* "click any color" — its OWN pill, ABOVE the wheel, readable on
+            any background. Sits just under the nav. */}
+        <motion.div
+          className="absolute left-0 right-0 z-20 flex justify-center"
+          style={{ top: 110 }}
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0, transition: { duration: 1.0, delay: 1.6 } }}
+        >
+          <div
+            className="font-display italic"
+            style={{
+              fontSize: 14,
+              color: '#F8F0E3',
+              padding: '8px 22px',
+              borderRadius: 9999,
+              backgroundColor: 'rgba(15, 12, 18, 0.6)',
+              border: '1px solid rgba(248, 240, 227, 0.18)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)'
+            }}
+          >
+            click any color to enter her chamber
+          </div>
+        </motion.div>
 
         {/* WHEEL — dead-centered in viewport */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -141,36 +199,8 @@ export default function Chromatica() {
           </div>
         </div>
 
-        {/* bottom invitation + toggles (invitation fades in after the wheel finishes assembling) */}
-        <div className="absolute bottom-10 left-0 right-0 flex flex-col items-center gap-4 z-20">
-          <motion.div
-            className="font-display italic"
-            style={{ fontSize: 13, color: 'rgba(250,250,250,0.6)' }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1, transition: { duration: 1.2, delay: 3.0 } }}
-          >
-            click any color to enter her chamber
-          </motion.div>
-          <div
-            className="flex items-center gap-5"
-            style={{
-              padding: '8px 20px',
-              borderRadius: 9999,
-              backgroundColor: 'rgba(15, 12, 18, 0.55)',
-              border: '1px solid rgba(248, 240, 227, 0.14)',
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)'
-            }}
-          >
-            <ToggleBtn active={musicMode} onClick={enableMusic}>
-              with music
-            </ToggleBtn>
-            <span style={{ color: 'rgba(248,240,227,0.28)', fontSize: 12 }}>·</span>
-            <ToggleBtn active={!musicMode} onClick={disableMusic}>
-              in silence
-            </ToggleBtn>
-          </div>
-        </div>
+        {/* GUIDE AGENT — first-visit walkthrough + occasional idle nudges */}
+        <GuideAgent onWheelState={!selected} />
       </div>
 
       {/* CHAMBER — mounted only when a color is selected. Plain conditional
@@ -242,17 +272,16 @@ const WORDMARK_PRESETS = {
   playfair:  { family: "'Playfair Display', serif",   weight: 800, size: 32, spacing: '-0.01em', top: 12, left: 28, italic: true },
   cormorant: { family: "'Cormorant Garamond', serif", weight: 600, size: 38, spacing: '0.005em', top: 14, left: 28, italic: true }
 };
-const WORDMARK_FONT = 'tangerine';   // ← change this to swap
+const WORDMARK_FONT = 'italianno';   // ← change this to swap
 
+// Centered in the nav bar; top/left positioning is handled by the parent flex.
 function ChromaticaWordmark() {
   const preset = WORDMARK_PRESETS[WORDMARK_FONT];
   const letters = 'Chromatica'.split('');
   return (
     <div
-      className="absolute z-20 select-none"
+      className="select-none"
       style={{
-        top: preset.top,
-        left: preset.left,
         fontFamily: preset.family,
         fontSize: preset.size,
         fontWeight: preset.weight,

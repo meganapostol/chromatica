@@ -84,7 +84,7 @@ const MusicPlayer = forwardRef(function MusicPlayer(props, ref) {
 
       <div
         className="fixed z-50"
-        style={{ bottom: 24, right: 24 }}
+        style={{ top: 16, left: 24 }}
       >
         {collapsed ? (
           <button
