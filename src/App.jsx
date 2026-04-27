@@ -10,15 +10,32 @@ import Chromatica from '@/pages/Chromatica';
 class ChromaticaErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { error: null };
+    this.state = { error: null, recoveryAttempts: 0, lastRecoveryAt: 0 };
+    this.recoverTimer = null;
   }
   static getDerivedStateFromError(error) {
     return { error };
   }
   componentDidCatch(error, info) {
     console.error('Chromatica caught a render error:', error, info);
+
+    // The "Failed to execute 'insertBefore' on 'Node'" family of errors
+    // is almost always a one-off DOM-reconciler hiccup caused by external
+    // mutations (browser extensions, third-party scripts). Auto-recover
+    // silently on the first 2 attempts within a 5s window, then surface
+    // the manual error UI if it keeps looping.
+    const now = Date.now();
+    const recentLoop = now - this.state.lastRecoveryAt < 5000;
+    const attempts = recentLoop ? this.state.recoveryAttempts + 1 : 1;
+    if (attempts <= 2) {
+      clearTimeout(this.recoverTimer);
+      this.recoverTimer = setTimeout(() => {
+        this.setState({ error: null, recoveryAttempts: attempts, lastRecoveryAt: Date.now() });
+      }, 400);
+    }
   }
-  reset = () => this.setState({ error: null });
+  componentWillUnmount() { clearTimeout(this.recoverTimer); }
+  reset = () => this.setState({ error: null, recoveryAttempts: 0, lastRecoveryAt: 0 });
   render() {
     if (this.state.error) {
       return (
@@ -110,16 +127,29 @@ const AuthenticatedApp = () => {
 
 
 function App() {
+  // Opt out of common DOM-mutating extensions. Grammarly / Google Translate
+  // / LanguageTool inserting <font>, <grammarly-extension>, etc. into the
+  // tree is the most common source of React's "insertBefore: not a child"
+  // errors. These attributes tell the major offenders to skip this subtree.
   return (
-    <ChromaticaErrorBoundary>
-      <AuthProvider>
-        <QueryClientProvider client={queryClientInstance}>
-          <Router>
-            <AuthenticatedApp />
-          </Router>
-        </QueryClientProvider>
-      </AuthProvider>
-    </ChromaticaErrorBoundary>
+    <div
+      translate="no"
+      className="notranslate"
+      data-gramm="false"
+      data-gramm_editor="false"
+      data-lt-installed="true"
+      style={{ minHeight: '100vh', backgroundColor: '#0A0A0F' }}
+    >
+      <ChromaticaErrorBoundary>
+        <AuthProvider>
+          <QueryClientProvider client={queryClientInstance}>
+            <Router>
+              <AuthenticatedApp />
+            </Router>
+          </QueryClientProvider>
+        </AuthProvider>
+      </ChromaticaErrorBoundary>
+    </div>
   )
 }
 

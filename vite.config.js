@@ -10,10 +10,13 @@ export default defineConfig({
       // Support for legacy code that imports the base44 SDK with @/integrations, @/entities, etc.
       // can be removed if the code has been updated to use the new SDK imports from @base44/sdk
       legacySDKImports: process.env.BASE44_LEGACY_SDK_IMPORTS === 'true',
-      hmrNotifier: true,
-      navigationNotifier: true,
-      analyticsTracker: true,
-      visualEditAgent: true
+      // All four flags below inject scripts / elements into the page that
+      // React doesn't know about; that's the most common source of the
+      // "insertBefore: node not a child" reconciler crashes. Disabled.
+      hmrNotifier: false,
+      navigationNotifier: false,
+      analyticsTracker: false,
+      visualEditAgent: false
     }),
     react(),
   ]
