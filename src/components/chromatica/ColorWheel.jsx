@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import SparkRing from './SparkRing';
 
 const TOTAL_SECTORS = 30;
 const GLYPHS = ['☉','☽','☿','♀','♁','♂','♃','♄','♅','♆','⚸','☊','☋','☌','☍','⚹','⚺','⚻','⚼','✦','✧','✶','❉','❋'];
@@ -27,9 +26,14 @@ function sectorPath(cx, cy, rOuter, rInner, startDeg, endDeg) {
 export const WHEEL_SIZE = 720;
 export const WHEEL_VOID_RADIUS = WHEEL_SIZE * 0.18;
 
-export default function ColorWheel({ colors = [], onSelect, exiting = false, burstSlot = null }) {
+export default function ColorWheel({ colors = [], onSelect, exiting = false, burstSlot = null, onHoverAngle = null, voidSlot = null }) {
   const [hoverIdx, setHoverIdx] = useState(null);
   const [hoverAngle, setHoverAngle] = useState(null);
+
+  const reportHover = (angle) => {
+    setHoverAngle(angle);
+    onHoverAngle?.(angle);
+  };
 
   const SIZE = WHEEL_SIZE;
   const cx = SIZE / 2;
@@ -68,12 +72,24 @@ export default function ColorWheel({ colors = [], onSelect, exiting = false, bur
         transition: 'opacity 0.4s ease-out'
       }}
     >
-      {/* Spark ring (canvas) */}
-      <div className="absolute inset-0">
-        <div className="w-full h-full relative">
-          <SparkRingWrapper colors={colors} hoveredAngle={hoverAngle} />
+      {/* HTML overlay slot for content drawn inside the void (e.g. animated blobs).
+          Sized to the void diameter (36% of the wheel container) and clipped to a circle. */}
+      {voidSlot && (
+        <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+          <div
+            style={{
+              width: '36%',
+              aspectRatio: '1',
+              borderRadius: '50%',
+              overflow: 'hidden',
+              mixBlendMode: 'screen',
+              opacity: 0.85
+            }}
+          >
+            {voidSlot}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* SVG rings */}
       <svg
@@ -174,8 +190,8 @@ export default function ColorWheel({ colors = [], onSelect, exiting = false, bur
                   key={`empty-${i}`}
                   d={sectorPath(cx, cy, rOuterColor * 0.995, rOuterColor * 0.985, start, end)}
                   fill="rgba(250,250,250,0.08)"
-                  onMouseEnter={() => { setHoverIdx(i); setHoverAngle(start + sectorAngle / 2); }}
-                  onMouseLeave={() => { setHoverIdx(null); setHoverAngle(null); }}
+                  onMouseEnter={() => { setHoverIdx(i); reportHover(start + sectorAngle / 2); }}
+                  onMouseLeave={() => { setHoverIdx(null); reportHover(null); }}
                   style={{ cursor: 'help' }}
                 >
                   <title>her chamber is being prepared</title>
@@ -209,8 +225,8 @@ export default function ColorWheel({ colors = [], onSelect, exiting = false, bur
                     transition: 'filter 0.3s ease, d 0.3s ease',
                     cursor: 'pointer'
                   }}
-                  onMouseEnter={() => { setHoverIdx(i); setHoverAngle(start + sectorAngle / 2); }}
-                  onMouseLeave={() => { setHoverIdx(null); setHoverAngle(null); }}
+                  onMouseEnter={() => { setHoverIdx(i); reportHover(start + sectorAngle / 2); }}
+                  onMouseLeave={() => { setHoverIdx(null); reportHover(null); }}
                   onClick={() => onSelect(color.id)}
                 >
                   <title>{color.name.toLowerCase()}</title>
@@ -274,7 +290,3 @@ export default function ColorWheel({ colors = [], onSelect, exiting = false, bur
   );
 }
 
-function SparkRingWrapper({ colors, hoveredAngle }) {
-  // Wrapper to size the canvas to the parent square at 720px logical.
-  return <SparkRing size={720} colors={colors} hoveredAngle={hoveredAngle} />;
-}

@@ -105,25 +105,20 @@
     100% { opacity: 1; transform: scale(1); }
   }
 
-  /* Aurora: ambient chromatic underlayer — slow drift behind everything. */
+  /* Aurora: cinematic warm/cool wash — two soft clouds, very low opacity,
+     drifting slowly. The celebration comes from the sparkles, not here. */
   .chromatica-aurora {
     background:
-      radial-gradient(ellipse 55% 40% at 18% 28%, rgba(227, 66, 52, 0.22), transparent 62%),
-      radial-gradient(ellipse 65% 45% at 82% 72%, rgba(91, 183, 229, 0.18), transparent 64%),
-      radial-gradient(ellipse 50% 70% at 62% 18%, rgba(242, 169, 0, 0.16), transparent 66%),
-      radial-gradient(ellipse 80% 35% at 30% 82%, rgba(142, 69, 133, 0.18), transparent 70%),
-      radial-gradient(ellipse 45% 60% at 88% 38%, rgba(46, 139, 87, 0.13), transparent 68%),
-      radial-gradient(ellipse 60% 50% at 12% 70%, rgba(220, 20, 60, 0.14), transparent 65%);
-    filter: blur(48px);
-    animation: chromatica-aurora-drift 42s ease-in-out infinite alternate;
+      radial-gradient(ellipse 85% 60% at 22% 38%, rgba(78, 32, 40, 0.30), transparent 72%),
+      radial-gradient(ellipse 85% 60% at 78% 62%, rgba(28, 38, 76, 0.26), transparent 72%);
+    filter: blur(70px);
+    animation: chromatica-aurora-drift 64s ease-in-out infinite alternate;
     will-change: transform, opacity;
   }
   @keyframes chromatica-aurora-drift {
-    0%   { transform: translate3d(0, 0, 0)       rotate(0deg)  scale(1.04); opacity: 0.85; }
-    25%  { transform: translate3d(2%, -1.5%, 0)  rotate(8deg)  scale(1.10); opacity: 1.00; }
-    50%  { transform: translate3d(-1.5%, 2%, 0)  rotate(-6deg) scale(1.06); opacity: 0.92; }
-    75%  { transform: translate3d(1.5%, 1.2%, 0) rotate(5deg)  scale(1.12); opacity: 1.00; }
-    100% { transform: translate3d(0, 0, 0)       rotate(0deg)  scale(1.04); opacity: 0.85; }
+    0%   { transform: translate3d(0, 0, 0)       scale(1.05); opacity: 0.85; }
+    50%  { transform: translate3d(-2%, 1.5%, 0)  scale(1.10); opacity: 1.00; }
+    100% { transform: translate3d(2%, -1.5%, 0)  scale(1.05); opacity: 0.85; }
   }
 
   /* Center void: slow chromatic breath even without music. */
@@ -137,18 +132,16 @@
     transform-origin: center center;
   }
 
-  /* Animated wordmark: each letter ripples through the wheel's palette. */
-  @keyframes chromatica-letter-cycle {
-    0%, 100% { color: rgba(248, 240, 227, 0.65); text-shadow: 0 0 0 transparent; }
-    10% { color: #E34234; text-shadow: 0 0 6px rgba(227,66,52,0.35); }
-    20% { color: #F2A900; text-shadow: 0 0 6px rgba(242,169,0,0.35); }
-    30% { color: #C0D725; text-shadow: 0 0 6px rgba(192,215,37,0.35); }
-    40% { color: #2E8B57; text-shadow: 0 0 6px rgba(46,139,87,0.35); }
-    50% { color: #5BB7E5; text-shadow: 0 0 6px rgba(91,183,229,0.35); }
-    60% { color: #1F4788; text-shadow: 0 0 6px rgba(31,71,136,0.4); }
-    70% { color: #8E4585; text-shadow: 0 0 6px rgba(142,69,133,0.35); }
-    80% { color: #DC143C; text-shadow: 0 0 6px rgba(220,20,60,0.35); }
-    90% { color: #F8F0E3; text-shadow: 0 0 6px rgba(248,240,227,0.4); }
+  /* Painted wordmark: gentle breath in scale & opacity. */
+  @keyframes chromatica-logo-breathe {
+    0%, 100% { transform: scale(1);     opacity: 0.92; }
+    50%      { transform: scale(1.02);  opacity: 1.00; }
+  }
+
+  /* Void blobs: slow rotation as a single group. */
+  @keyframes chromatica-blobs-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
   }
 
   .scroll-hide::-webkit-scrollbar { display: none; }

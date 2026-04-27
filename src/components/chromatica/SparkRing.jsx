@@ -1,33 +1,55 @@
 import React, { useEffect, useRef } from 'react';
 import { hexToRgb } from '@/lib/chromatica-utils';
 
-// Canvas-based "starfield + color explosions" around the wheel.
-// Three particle layers:
-//   1. Ambient stars     — drift slowly inward, twinkle, sampled from wheel hue
-//   2. Diffraction stars — bigger, with cross-spike rays + glow halo
-//   3. Burst embers      — spawn in clustered eruptions every few seconds
-export default function SparkRing({ size = 720, colors = [], hoveredAngle = null }) {
+// Full-viewport starfield + color celebration around the wheel.
+// Three layers, all drifting:
+//   1. INNER ambient   — drifts inward toward wheel perimeter, twinkles
+//   2. CONSTELLATION   — sparse distant stars across the entire viewport
+//   3. EXPLOSIONS      — periodic bursts at the wheel's perimeter that
+//                         fly outward across the whole page
+//
+// The canvas is fixed to the viewport (`fixed inset-0`) so particles never
+// hit a 720px box edge.
+export default function SparkRing({ colors = [], hoveredAngle = null }) {
   const canvasRef = useRef(null);
   const rafRef = useRef(null);
+  const dimsRef = useRef({ w: 0, h: 0 });
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = size * dpr;
-    canvas.height = size * dpr;
-    canvas.style.width = `${size}px`;
-    canvas.style.height = `${size}px`;
     const ctx = canvas.getContext('2d');
-    ctx.scale(dpr, dpr);
+    const dpr = window.devicePixelRatio || 1;
 
-    const cx = size / 2;
-    const cy = size / 2;
-    const ringInner = size * 0.43;       // perimeter of the color ring
-    const ringOuter = size * 0.495;      // edge of the visible spark zone
-    const farReach  = size * 0.62;       // outer corona where strays drift
+    function resize() {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      dimsRef.current = { w, h };
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
+    }
+    resize();
+    window.addEventListener('resize', resize);
 
-    // Sort colors by hueOrder so the angle-to-color mapping mirrors the wheel.
+    function center() {
+      const { w, h } = dimsRef.current;
+      return { cx: w / 2, cy: h / 2 };
+    }
+    function wheelRadius() {
+      const { w, h } = dimsRef.current;
+      // Wheel = min(78vh, 78vw), capped at 820. Half is the radius.
+      return Math.min(820, Math.min(w, h) * 0.78) / 2;
+    }
+    function maxReach() {
+      const { w, h } = dimsRef.current;
+      return Math.sqrt(w * w + h * h) / 2;
+    }
+
+    // Sort colors by hueOrder so angle-to-color mapping mirrors the wheel.
     const sorted = [...colors].sort((a, b) => a.hueOrder - b.hueOrder);
 
     function colorAtAngle(deg) {
@@ -36,132 +58,162 @@ export default function SparkRing({ size = 720, colors = [], hoveredAngle = null
       const c = sorted[idx % sorted.length] || sorted[0];
       return hexToRgb(c.hex);
     }
+    function angleFromCenter(x, y) {
+      const { cx, cy } = center();
+      return ((Math.atan2(y - cy, x - cx) * 180 / Math.PI) + 90 + 360) % 360;
+    }
+    function jitter({ r, g, b }, amt) {
+      const c = (v) => Math.max(0, Math.min(255, Math.round(v + (Math.random() - 0.5) * amt)));
+      return { r: c(r), g: c(g), b: c(b) };
+    }
 
-    // ---- Ambient layer (drifting stars) ----------------------------------
-    const AMBIENT_COUNT = 220;
-    const ambient = Array.from({ length: AMBIENT_COUNT }, () => spawnAmbient());
+    // ---- LAYER 1: INNER AMBIENT (close to wheel, drift inward) -----------
+    const INNER_COUNT = 320;
+    const inner = Array.from({ length: INNER_COUNT }, () => spawnInner());
 
-    function spawnAmbient() {
+    function spawnInner() {
+      const wR = wheelRadius();
       const angle = Math.random() * Math.PI * 2;
-      const r = ringOuter + Math.random() * (farReach - ringOuter);
-      const isStar = Math.random() < 0.28;            // 28% diffraction stars
+      // Spawn between wheel perimeter and ~1.6× wheel radius
+      const r = wR * (1.05 + Math.random() * 0.55);
+      const isStar = Math.random() < 0.30;
       return {
         kind: isStar ? 'star' : 'dot',
         angle,
         r,
-        targetR: ringInner + Math.random() * (ringOuter - ringInner) * 0.7,
-        speed: 0.05 + Math.random() * 0.09,
-        size: isStar ? 1.6 + Math.random() * 2.4 : 0.8 + Math.random() * 1.6,
+        targetR: wR * (1.0 + Math.random() * 0.05),
+        speed: 0.04 + Math.random() * 0.10,
+        size: isStar ? 1.4 + Math.random() * 2.6 : 0.7 + Math.random() * 1.5,
         life: Math.random(),
-        decay: 0.0018 + Math.random() * 0.0026,
-        twinkleSpeed: 0.04 + Math.random() * 0.08,
+        decay: 0.0014 + Math.random() * 0.0024,
+        twinkleSpeed: 0.03 + Math.random() * 0.10,
         twinklePhase: Math.random() * Math.PI * 2
       };
     }
 
-    // ---- Burst layer (color explosions) ----------------------------------
+    // ---- LAYER 2: CONSTELLATION (sparse, all over viewport) ---------------
+    const CONST_COUNT = 220;
+    let constellation = [];
+    function spawnConstellation() {
+      const { w, h } = dimsRef.current;
+      const wR = wheelRadius();
+      // Avoid the wheel area — place in a viewport ring outside it.
+      let x, y, dist;
+      let attempts = 0;
+      do {
+        x = Math.random() * w;
+        y = Math.random() * h;
+        const { cx, cy } = center();
+        dist = Math.hypot(x - cx, y - cy);
+        attempts++;
+      } while (dist < wR * 1.1 && attempts < 8);
+      return {
+        x, y,
+        size: 0.6 + Math.random() * 1.6,
+        twinkleSpeed: 0.012 + Math.random() * 0.04,
+        twinklePhase: Math.random() * Math.PI * 2,
+        baseAlpha: 0.18 + Math.random() * 0.32,
+        kind: Math.random() < 0.18 ? 'star' : 'dot',
+        // Hue tint for constellation: pull from the wheel's palette so distant
+        // stars echo the colors (very slowly varied).
+        colorAngle: Math.random() * 360,
+        life: Math.random(),
+        decay: 0.0006 + Math.random() * 0.0012
+      };
+    }
+    function rebuildConstellation() {
+      constellation = Array.from({ length: CONST_COUNT }, () => spawnConstellation());
+    }
+    rebuildConstellation();
+
+    // ---- LAYER 3: EXPLOSIONS (perimeter bursts flying outward) -----------
     let bursts = [];
-    let nextBurstAt = performance.now() + 1200 + Math.random() * 2400;
+    let nextBurstAt = performance.now() + 800 + Math.random() * 1600;
 
     function fireBurst(originAngle = null) {
+      const wR = wheelRadius();
+      const { cx, cy } = center();
       const angle = originAngle ?? Math.random() * Math.PI * 2;
-      const ox = cx + Math.cos(angle) * (ringOuter + 4);
-      const oy = cy + Math.sin(angle) * (ringOuter + 4);
-      const count = 14 + Math.floor(Math.random() * 12);
+      const ox = cx + Math.cos(angle) * (wR * 1.04);
+      const oy = cy + Math.sin(angle) * (wR * 1.04);
+      const count = 16 + Math.floor(Math.random() * 14);
       const deg = (angle * 180 / Math.PI + 90 + 360) % 360;
       const baseColor = colorAtAngle(deg);
       for (let i = 0; i < count; i++) {
-        const spread = (Math.random() - 0.5) * 1.2;       // ±0.6 rad fan
+        const spread = (Math.random() - 0.5) * 1.4;       // ±0.7 rad fan
         const dir = angle + spread;
-        const speed = 0.6 + Math.random() * 1.6;
+        const speed = 1.4 + Math.random() * 3.2;          // travels much further
         bursts.push({
           x: ox,
           y: oy,
           vx: Math.cos(dir) * speed,
           vy: Math.sin(dir) * speed,
           life: 0,
-          maxLife: 60 + Math.random() * 50,
-          size: 1.4 + Math.random() * 2.4,
-          color: jitter(baseColor, 28)
+          maxLife: 90 + Math.random() * 90,
+          size: 1.4 + Math.random() * 2.6,
+          color: jitter(baseColor, 36)
         });
       }
     }
 
-    function jitter({ r, g, b }, amt) {
-      return {
-        r: clamp255(r + (Math.random() - 0.5) * amt),
-        g: clamp255(g + (Math.random() - 0.5) * amt),
-        b: clamp255(b + (Math.random() - 0.5) * amt)
-      };
-    }
-    function clamp255(v) { return Math.max(0, Math.min(255, Math.round(v))); }
-
-    // ---- Render helpers --------------------------------------------------
-    function drawDot(x, y, p, alpha) {
-      const { r, g, b } = colorAtAngle(angleAt(x, y));
-      // Soft halo
+    // ---- RENDER HELPERS --------------------------------------------------
+    function drawDot(x, y, p, alpha, color) {
+      const { r, g, b } = color || colorAtAngle(angleFromCenter(x, y));
       const halo = ctx.createRadialGradient(x, y, 0, x, y, p.size * 4);
       halo.addColorStop(0,   `rgba(${r}, ${g}, ${b}, ${alpha})`);
       halo.addColorStop(0.4, `rgba(${r}, ${g}, ${b}, ${alpha * 0.35})`);
       halo.addColorStop(1,   'rgba(0,0,0,0)');
       ctx.fillStyle = halo;
       ctx.fillRect(x - p.size * 4, y - p.size * 4, p.size * 8, p.size * 8);
-      // Bright core
       ctx.beginPath();
       ctx.arc(x, y, p.size * 0.55, 0, Math.PI * 2);
       ctx.fillStyle = `rgba(255,255,255,${Math.min(1, alpha * 1.4)})`;
       ctx.fill();
     }
 
-    function drawStar(x, y, p, alpha) {
-      const { r, g, b } = colorAtAngle(angleAt(x, y));
-      // Wide saturated halo
+    function drawStar(x, y, p, alpha, color) {
+      const { r, g, b } = color || colorAtAngle(angleFromCenter(x, y));
       const halo = ctx.createRadialGradient(x, y, 0, x, y, p.size * 6);
-      halo.addColorStop(0,   `rgba(${r}, ${g}, ${b}, ${alpha * 1.1})`);
-      halo.addColorStop(0.35,`rgba(${r}, ${g}, ${b}, ${alpha * 0.5})`);
-      halo.addColorStop(1,   'rgba(0,0,0,0)');
+      halo.addColorStop(0,    `rgba(${r}, ${g}, ${b}, ${alpha * 1.1})`);
+      halo.addColorStop(0.35, `rgba(${r}, ${g}, ${b}, ${alpha * 0.5})`);
+      halo.addColorStop(1,    'rgba(0,0,0,0)');
       ctx.fillStyle = halo;
       ctx.fillRect(x - p.size * 6, y - p.size * 6, p.size * 12, p.size * 12);
-      // Diffraction spikes (cross)
       ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha * 0.85})`;
       ctx.lineWidth = 0.7;
       ctx.beginPath();
       ctx.moveTo(x - p.size * 5, y); ctx.lineTo(x + p.size * 5, y);
       ctx.moveTo(x, y - p.size * 5); ctx.lineTo(x, y + p.size * 5);
       ctx.stroke();
-      // White-hot core
       ctx.beginPath();
       ctx.arc(x, y, p.size * 0.4, 0, Math.PI * 2);
       ctx.fillStyle = `rgba(255,255,255,${Math.min(1, alpha * 1.6)})`;
       ctx.fill();
     }
 
-    function angleAt(x, y) {
-      return ((Math.atan2(y - cy, x - cx) * 180 / Math.PI) + 90 + 360) % 360;
-    }
-
-    // ---- Tick ------------------------------------------------------------
+    // ---- TICK ------------------------------------------------------------
     function tick(now) {
-      ctx.clearRect(0, 0, size, size);
+      const { w, h } = dimsRef.current;
+      ctx.clearRect(0, 0, w, h);
       ctx.globalCompositeOperation = 'lighter';
 
-      // Ambient
-      for (let i = 0; i < ambient.length; i++) {
-        const p = ambient[i];
+      const { cx, cy } = center();
+
+      // INNER ambient
+      for (let i = 0; i < inner.length; i++) {
+        const p = inner[i];
         p.r -= p.speed;
         p.life += p.decay;
         p.twinklePhase += p.twinkleSpeed;
 
         if (p.r < p.targetR || p.life > 1) {
-          ambient[i] = spawnAmbient();
+          inner[i] = spawnInner();
           continue;
         }
-
         const x = cx + Math.cos(p.angle) * p.r;
         const y = cy + Math.sin(p.angle) * p.r;
         const deg = (p.angle * 180 / Math.PI + 90 + 360) % 360;
 
-        // Hover intensification: 3× alpha within ±14° of hovered angle.
         let alphaBoost = 1;
         if (hoveredAngle !== null) {
           const diff = Math.abs(((deg - hoveredAngle + 540) % 360) - 180);
@@ -170,36 +222,58 @@ export default function SparkRing({ size = 720, colors = [], hoveredAngle = null
 
         const fade = Math.sin(p.life * Math.PI);
         const twinkle = 0.55 + 0.45 * Math.sin(p.twinklePhase);
-        const baseAlpha = p.kind === 'star' ? 0.55 : 0.35;
+        const baseAlpha = p.kind === 'star' ? 0.55 : 0.38;
         const alpha = baseAlpha * fade * twinkle * alphaBoost;
 
         if (p.kind === 'star') drawStar(x, y, p, alpha);
         else                   drawDot(x, y, p, alpha);
       }
 
-      // Bursts (timer-driven explosions, every ~4–8s)
+      // CONSTELLATION (distant stars)
+      for (let i = 0; i < constellation.length; i++) {
+        const s = constellation[i];
+        s.life += s.decay;
+        s.twinklePhase += s.twinkleSpeed;
+        if (s.life > 1) { constellation[i] = spawnConstellation(); continue; }
+
+        const fade = Math.sin(s.life * Math.PI);
+        const twinkle = 0.45 + 0.55 * Math.sin(s.twinklePhase);
+        const alpha = s.baseAlpha * fade * twinkle;
+        const color = colorAtAngle(s.colorAngle);
+
+        if (s.kind === 'star') drawStar(s.x, s.y, s, alpha, color);
+        else                   drawDot(s.x, s.y, s, alpha, color);
+      }
+
+      // EXPLOSIONS — frequent, fly outward all the way to viewport edge
       if (now >= nextBurstAt) {
         fireBurst();
-        nextBurstAt = now + 4000 + Math.random() * 4000;
+        // 30% chance of a quick double-burst on the opposite side
+        if (Math.random() < 0.3) {
+          setTimeout(() => fireBurst(Math.random() * Math.PI * 2), 180);
+        }
+        nextBurstAt = now + 2400 + Math.random() * 3200;
       }
       for (let i = bursts.length - 1; i >= 0; i--) {
         const e = bursts[i];
         e.x += e.vx;
         e.y += e.vy;
-        e.vx *= 0.985;          // mild drag
-        e.vy *= 0.985;
+        e.vx *= 0.991;
+        e.vy *= 0.991;
         e.life += 1;
-        if (e.life > e.maxLife) { bursts.splice(i, 1); continue; }
-
+        // Cull when offscreen or expired
+        if (e.life > e.maxLife || e.x < -50 || e.x > w + 50 || e.y < -50 || e.y > h + 50) {
+          bursts.splice(i, 1);
+          continue;
+        }
         const t = e.life / e.maxLife;
-        const alpha = Math.sin(t * Math.PI) * 0.95;     // ramp up & out
-        const grad = ctx.createRadialGradient(e.x, e.y, 0, e.x, e.y, e.size * 5);
-        grad.addColorStop(0,   `rgba(${e.color.r}, ${e.color.g}, ${e.color.b}, ${alpha})`);
-        grad.addColorStop(0.4, `rgba(${e.color.r}, ${e.color.g}, ${e.color.b}, ${alpha * 0.35})`);
-        grad.addColorStop(1,   'rgba(0,0,0,0)');
+        const alpha = Math.sin(t * Math.PI) * 1.0;
+        const grad = ctx.createRadialGradient(e.x, e.y, 0, e.x, e.y, e.size * 6);
+        grad.addColorStop(0,    `rgba(${e.color.r}, ${e.color.g}, ${e.color.b}, ${alpha})`);
+        grad.addColorStop(0.35, `rgba(${e.color.r}, ${e.color.g}, ${e.color.b}, ${alpha * 0.45})`);
+        grad.addColorStop(1,    'rgba(0,0,0,0)');
         ctx.fillStyle = grad;
-        ctx.fillRect(e.x - e.size * 5, e.y - e.size * 5, e.size * 10, e.size * 10);
-        // White-hot core
+        ctx.fillRect(e.x - e.size * 6, e.y - e.size * 6, e.size * 12, e.size * 12);
         ctx.beginPath();
         ctx.arc(e.x, e.y, e.size * 0.4, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(255,255,255,${Math.min(1, alpha * 1.4)})`;
@@ -208,15 +282,21 @@ export default function SparkRing({ size = 720, colors = [], hoveredAngle = null
 
       rafRef.current = requestAnimationFrame(tick);
     }
+
     rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [size, colors, hoveredAngle]);
+
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      window.removeEventListener('resize', resize);
+    };
+  }, [colors, hoveredAngle]);
 
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 pointer-events-none rotate-spark-ring"
-      style={{ mixBlendMode: 'screen' }}
+      aria-hidden="true"
+      className="fixed inset-0 pointer-events-none"
+      style={{ zIndex: 1, mixBlendMode: 'screen' }}
     />
   );
 }

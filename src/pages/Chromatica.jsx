@@ -8,6 +8,8 @@ import MusicPlayer from '@/components/chromatica/MusicPlayer';
 import Credits from '@/components/chromatica/Credits';
 import LyricBurst from '@/components/chromatica/LyricBurst';
 import HeroBackdrop from '@/components/chromatica/HeroBackdrop';
+import SparkRing from '@/components/chromatica/SparkRing';
+import VoidBlobs from '@/components/chromatica/VoidBlobs';
 
 // Drop a video at chromatica/public/hero.mp4 and uncomment the videoSrc below
 // to swap the aurora gradient for cinematic footage.
@@ -58,6 +60,8 @@ export default function Chromatica() {
 
   // Stable callbacks so child effects don't re-fire on every parent render.
   // (Credits.jsx and ColorWheel both depend on these.)
+  const [hoverAngle, setHoverAngle] = useState(null); // wheel hover → sparks intensify
+
   const handleSelect = useCallback((id) => setSelectedId(id), []);
   const handleBack = useCallback(() => setSelectedId(null), []);
   const handleCloseCredits = useCallback(() => setCreditsOpen(false), []);
@@ -80,6 +84,11 @@ export default function Chromatica() {
     <div className="relative min-h-screen w-screen chromatica-vignette overflow-hidden">
       {/* AMBIENT HERO — drifting aurora (or video, if HERO_VIDEO_SRC is set) */}
       <HeroBackdrop videoSrc={HERO_VIDEO_SRC} />
+
+      {/* VIEWPORT-LEVEL SPARKLE LAYER — unbounded by the wheel's box */}
+      {!selected && (
+        <SparkRing colors={colors} hoveredAngle={hoverAngle} />
+      )}
 
       {/* WHEEL + CHAMBER share a single AnimatePresence so only one mounts at a time.
           Keys are intentionally just "wheel" / "chamber" (NOT the color id) — switching
@@ -117,6 +126,8 @@ export default function Chromatica() {
                 <ColorWheel
                   colors={colors}
                   onSelect={handleSelect}
+                  onHoverAngle={setHoverAngle}
+                  voidSlot={<VoidBlobs />}
                   burstSlot={
                     <LyricBurst
                       images={colors.map((c) => c.image).filter(Boolean)}
@@ -220,31 +231,34 @@ function ToggleBtn({ active, onClick, children }) {
   );
 }
 
-// Animated wordmark: each letter cycles through the wheel's palette
-// on a phase-offset loop. Drops in for the placeholder lowercase mono
-// "chromatica" until Megan's hand-made logo arrives.
+// Painted CHROMATICA wordmark — Megan's hand-lettered logo, breathing softly.
+// The PNG lives in /public/Biro Script Plus.png (transparent BG, 2000×500).
 function ChromaticaWordmark() {
-  const letters = 'CHROMATICA'.split('');
   return (
     <div
-      className="absolute top-6 left-8 font-mono-c tracking-mono z-20 select-none"
-      style={{ fontSize: 12, lineHeight: 1, fontWeight: 500 }}
+      className="absolute top-5 left-6 z-20 select-none"
       aria-label="Chromatica"
     >
-      {letters.map((letter, i) => (
-        <span
-          key={i}
-          aria-hidden="true"
-          style={{
-            display: 'inline-block',
-            animation: 'chromatica-letter-cycle 16s ease-in-out infinite',
-            animationDelay: `${i * -1.6}s`,
-            willChange: 'color'
-          }}
-        >
-          {letter}
-        </span>
-      ))}
+      <img
+        src="/Biro%20Script%20Plus.png"
+        alt="Chromatica"
+        draggable={false}
+        style={{
+          height: 56,
+          width: 'auto',
+          objectFit: 'contain',
+          animation: 'chromatica-logo-breathe 7s ease-in-out infinite',
+          filter: 'drop-shadow(0 0 12px rgba(248, 240, 227, 0.18))',
+          willChange: 'transform, opacity, filter',
+          imageRendering: 'auto'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.filter = 'drop-shadow(0 0 18px rgba(248, 240, 227, 0.45))';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.filter = 'drop-shadow(0 0 12px rgba(248, 240, 227, 0.18))';
+        }}
+      />
     </div>
   );
 }
