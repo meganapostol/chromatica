@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import COLORS from '@/data/colors';
 import { resolveImage } from '@/data/imageMap';
@@ -10,52 +10,33 @@ import LyricBurst from '@/components/chromatica/LyricBurst';
 
 export default function Chromatica() {
   const [selectedId, setSelectedId] = useState(null);
-  const [musicMode, setMusicMode] = useState(true); // default WITH MUSIC
+  const [musicMode, setMusicMode] = useState(false); // default IN SILENCE — user opts into music
   const [creditsOpen, setCreditsOpen] = useState(false);
-  const [exiting, setExiting] = useState(false); // wheel particles flag for dissolve
 
   const playerRef = useRef(null);
 
-  // Autoplay-muted on mount, then unmute on first user interaction (any
-  // click/scroll/keypress). Most browsers permit muted autoplay; the unmute
-  // is gated by interaction to satisfy autoplay-with-sound policies.
+  // Music mode controller. No autoplay on mount — silence is the first
+  // impression. When the user toggles "with music", we unmute & play
+  // (their click is a user gesture, so this complies with autoplay policy).
+  // Also re-asserts play on chamber / credits transitions because YT can
+  // self-pause when modals stack over the iframe.
   useEffect(() => {
-    const tryAutoplay = () => {
+    if (!musicMode) {
+      playerRef.current?.pause?.();
+      return;
+    }
+    const tryPlay = () => {
       if (!playerRef.current?.isReady?.()) return false;
-      playerRef.current.mute();
+      playerRef.current.unmute();
       playerRef.current.play();
       return true;
     };
-    // Poll briefly until the YT player is ready, then start muted playback.
+    if (tryPlay()) return;
     const poll = setInterval(() => {
-      if (tryAutoplay()) clearInterval(poll);
+      if (tryPlay()) clearInterval(poll);
     }, 200);
-
-    let unmuted = false;
-    const handleFirstInteraction = () => {
-      if (unmuted) return;
-      unmuted = true;
-      if (musicMode && playerRef.current?.isReady?.()) {
-        playerRef.current.unmute();
-        playerRef.current.play();
-      }
-    };
-    window.addEventListener('click', handleFirstInteraction, { once: true });
-    window.addEventListener('keydown', handleFirstInteraction, { once: true });
-    window.addEventListener('scroll', handleFirstInteraction, { once: true, passive: true });
-    window.addEventListener('wheel', handleFirstInteraction, { once: true, passive: true });
-    window.addEventListener('touchstart', handleFirstInteraction, { once: true, passive: true });
-
-    return () => {
-      clearInterval(poll);
-      window.removeEventListener('click', handleFirstInteraction);
-      window.removeEventListener('keydown', handleFirstInteraction);
-      window.removeEventListener('scroll', handleFirstInteraction);
-      window.removeEventListener('wheel', handleFirstInteraction);
-      window.removeEventListener('touchstart', handleFirstInteraction);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    return () => clearInterval(poll);
+  }, [musicMode, creditsOpen, selectedId]);
 
   // Resolve image paths once.
   const colors = useMemo(
@@ -70,22 +51,19 @@ export default function Chromatica() {
   const selected = colors.find((c) => c.id === selectedId) || null;
   const selectedIndex = sortedByHue.findIndex((c) => c.id === selectedId);
 
-  const handleSelect = (id) => {
-    setExiting(true);
-    setTimeout(() => {
-      setSelectedId(id);
-      setExiting(false);
-    }, 400);
-  };
-
-  const handleBack = () => setSelectedId(null);
-
-  const handleMusicMode = (enabled) => {
-    setMusicMode(enabled);
-    if (!playerRef.current) return;
-    if (enabled) playerRef.current.play();
-    else playerRef.current.pause();
-  };
+  // Stable callbacks so child effects don't re-fire on every parent render.
+  // (Credits.jsx and ColorWheel both depend on these.)
+  const handleSelect = useCallback((id) => setSelectedId(id), []);
+  const handleBack = useCallback(() => setSelectedId(null), []);
+  const handleCloseCredits = useCallback(() => setCreditsOpen(false), []);
+  const handleSelectCompanion = useCallback((id) => setSelectedId(id), []);
+  const enableMusic = useCallback(() => setMusicMode(true), []);
+  const disableMusic = useCallback(() => setMusicMode(false), []);
+  const openCredits = useCallback(() => setCreditsOpen(true), []);
+  const getYTTime = useCallback(
+    () => playerRef.current?.getCurrentTime?.() || 0,
+    []
+  );
 
   // Lock body scroll on the wheel state so transition doesn't jolt.
   useEffect(() => {
@@ -105,31 +83,21 @@ export default function Chromatica() {
             animate={{ opacity: 1, transition: { duration: 0.5 } }}
             exit={{ opacity: 0, transition: { duration: 0.4 } }}
           >
-            {/* top-left wordmark */}
-            <div
-              className="absolute top-6 left-8 font-mono-c uppercase tracking-mono z-20"
-              style={{ fontSize: 11, color: 'rgba(250,250,250,0.5)' }}
-            >
-              chromatica
-            </div>
+            {/* top-left animated wordmark */}
+            <ChromaticaWordmark />
 
             {/* top-right meta */}
             <div className="absolute top-6 right-8 z-20 flex items-center gap-6">
               <button
-                onClick={() => setCreditsOpen(true)}
+                type="button"
+                onClick={openCredits}
                 className="font-mono-c uppercase tracking-mono"
-                style={{ fontSize: 11, color: 'rgba(250,250,250,0.5)' }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(250,250,250,0.9)')}
-                onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(250,250,250,0.5)')}
+                style={{ fontSize: 11, color: 'rgba(248,240,227,0.6)' }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(248,240,227,1)')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(248,240,227,0.6)')}
               >
                 credits
               </button>
-              <div
-                className="font-mono-c uppercase tracking-mono"
-                style={{ fontSize: 11, color: 'rgba(250,250,250,0.5)' }}
-              >
-                archive ∞
-              </div>
             </div>
 
             {/* WHEEL — dead-centered in viewport */}
@@ -138,11 +106,10 @@ export default function Chromatica() {
                 <ColorWheel
                   colors={colors}
                   onSelect={handleSelect}
-                  exiting={exiting}
                   burstSlot={
                     <LyricBurst
                       images={colors.map((c) => c.image).filter(Boolean)}
-                      getCurrentTime={() => playerRef.current?.getCurrentTime?.() || 0}
+                      getCurrentTime={getYTTime}
                       size={WHEEL_SIZE}
                       voidRadius={WHEEL_VOID_RADIUS}
                     />
@@ -161,12 +128,22 @@ export default function Chromatica() {
               >
                 click any color to enter her chamber
               </motion.div>
-              <div className="flex items-center gap-8">
-                <ToggleBtn active={musicMode} onClick={() => handleMusicMode(true)}>
+              <div
+                className="flex items-center gap-5"
+                style={{
+                  padding: '8px 20px',
+                  borderRadius: 9999,
+                  backgroundColor: 'rgba(15, 12, 18, 0.55)',
+                  border: '1px solid rgba(248, 240, 227, 0.14)',
+                  backdropFilter: 'blur(8px)',
+                  WebkitBackdropFilter: 'blur(8px)'
+                }}
+              >
+                <ToggleBtn active={musicMode} onClick={enableMusic}>
                   with music
                 </ToggleBtn>
-                <span style={{ color: 'rgba(250,250,250,0.2)' }}>·</span>
-                <ToggleBtn active={!musicMode} onClick={() => handleMusicMode(false)}>
+                <span style={{ color: 'rgba(248,240,227,0.28)', fontSize: 12 }}>·</span>
+                <ToggleBtn active={!musicMode} onClick={disableMusic}>
                   in silence
                 </ToggleBtn>
               </div>
@@ -181,14 +158,14 @@ export default function Chromatica() {
             onBack={handleBack}
             musicMode={musicMode}
             allColors={colors}
-            onSelectCompanion={(id) => setSelectedId(id)}
+            onSelectCompanion={handleSelectCompanion}
           />
         )}
       </AnimatePresence>
 
       {/* CREDITS PANEL */}
       <AnimatePresence>
-        {creditsOpen && <Credits onClose={() => setCreditsOpen(false)} />}
+        {creditsOpen && <Credits onClose={handleCloseCredits} />}
       </AnimatePresence>
 
       {/* PERSISTENT MUSIC PLAYER */}
@@ -203,15 +180,54 @@ function ToggleBtn({ active, onClick, children }) {
       onClick={onClick}
       className="font-mono-c uppercase"
       style={{
-        fontSize: 11,
-        letterSpacing: '0.15em',
-        color: active ? 'rgba(250,250,250,1)' : 'rgba(250,250,250,0.4)',
-        borderBottom: active ? '1px solid rgba(250,250,250,0.6)' : '1px solid transparent',
-        paddingBottom: 3,
+        fontSize: 12,
+        letterSpacing: '0.2em',
+        color: active ? '#F8F0E3' : 'rgba(248,240,227,0.55)',
+        borderBottom: active
+          ? '1.5px solid rgba(248,240,227,0.85)'
+          : '1.5px solid transparent',
+        paddingBottom: 4,
+        paddingTop: 2,
+        cursor: 'pointer',
         transition: 'color 0.3s, border-color 0.3s'
+      }}
+      onMouseEnter={(e) => {
+        if (!active) e.currentTarget.style.color = 'rgba(248,240,227,0.9)';
+      }}
+      onMouseLeave={(e) => {
+        if (!active) e.currentTarget.style.color = 'rgba(248,240,227,0.55)';
       }}
     >
       {children}
     </button>
+  );
+}
+
+// Animated wordmark: each letter cycles through the wheel's palette
+// on a phase-offset loop. Drops in for the placeholder lowercase mono
+// "chromatica" until Megan's hand-made logo arrives.
+function ChromaticaWordmark() {
+  const letters = 'CHROMATICA'.split('');
+  return (
+    <div
+      className="absolute top-6 left-8 font-mono-c tracking-mono z-20 select-none"
+      style={{ fontSize: 12, lineHeight: 1, fontWeight: 500 }}
+      aria-label="Chromatica"
+    >
+      {letters.map((letter, i) => (
+        <span
+          key={i}
+          aria-hidden="true"
+          style={{
+            display: 'inline-block',
+            animation: 'chromatica-letter-cycle 16s ease-in-out infinite',
+            animationDelay: `${i * -1.6}s`,
+            willChange: 'color'
+          }}
+        >
+          {letter}
+        </span>
+      ))}
+    </div>
   );
 }

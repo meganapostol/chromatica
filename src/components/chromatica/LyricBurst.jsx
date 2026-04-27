@@ -1,13 +1,17 @@
 import React, { useEffect, useState, useRef } from 'react';
 
-// Centerpiece photomontage: when the lyric "please don't ever take it from me"
-// fires, the central void becomes a strobing window into nature.
+// Centerpiece photomontage: while the chorus plays, the central void
+// becomes a strobing window into nature — color cuts every ~200ms for
+// the entire chorus length.
 //
-// Approximate timestamps (seconds) of the lyric occurrences in
-// Miyazaki (The Nature Version) by Paris Paloma. Edit if more precise
-// timestamps become available.
-export const LYRIC_TIMESTAMPS = [54, 115, 188];   // chorus 1, chorus 2, chorus 3
-export const LYRIC_DURATION_S = 3.5;               // length of the phrase
+// Approximate chorus windows (start, end in seconds) for
+// Miyazaki (The Nature Version) by Paris Paloma. Tune if the
+// timing drifts against the actual track.
+export const CHORUSES = [
+  { start: 54,  end: 72  }, // chorus 1
+  { start: 115, end: 133 }, // chorus 2
+  { start: 188, end: 220 }  // final chorus / outro (often longer)
+];
 const CUT_INTERVAL_MS = 200;                       // ~5 cuts/sec
 
 // Drives a fast-cut nature montage rendered inside the wheel's central void.
@@ -15,11 +19,9 @@ const CUT_INTERVAL_MS = 200;                       // ~5 cuts/sec
 export default function LyricBurst({ images = [], getCurrentTime, size = 720, voidRadius }) {
   const [active, setActive] = useState(false);
   const [imgIndex, setImgIndex] = useState(0);
-  const lastFireRef = useRef(-1);
   const cutTimerRef = useRef(null);
-  const endTimerRef = useRef(null);
 
-  // Poll the player time and fire bursts on lyric hits.
+  // Poll the player time. Active whenever current time sits inside any chorus window.
   useEffect(() => {
     if (!images.length) return;
     const poll = setInterval(() => {
@@ -27,41 +29,28 @@ export default function LyricBurst({ images = [], getCurrentTime, size = 720, vo
       try { t = getCurrentTime?.(); } catch { return; }
       if (typeof t !== 'number' || isNaN(t)) return;
 
-      for (const ts of LYRIC_TIMESTAMPS) {
-        // Detect crossing into the lyric window once per occurrence.
-        if (t >= ts && t < ts + 0.6 && lastFireRef.current !== ts) {
-          lastFireRef.current = ts;
-          fire();
+      const inChorus = CHORUSES.some((c) => t >= c.start && t <= c.end);
+      setActive((wasActive) => {
+        if (inChorus && !wasActive) {
+          // Entering chorus — pick a starting image and start cutting.
+          setImgIndex(Math.floor(Math.random() * images.length));
+          clearInterval(cutTimerRef.current);
+          cutTimerRef.current = setInterval(() => {
+            setImgIndex((i) => (i + 1 + Math.floor(Math.random() * (images.length - 1))) % images.length);
+          }, CUT_INTERVAL_MS);
         }
-      }
-      // Reset the fire-once latch when we're well past the window.
-      if (lastFireRef.current >= 0 && t > lastFireRef.current + LYRIC_DURATION_S + 1) {
-        lastFireRef.current = -1;
-      }
+        if (!inChorus && wasActive) {
+          // Leaving chorus — stop cutting.
+          clearInterval(cutTimerRef.current);
+        }
+        return inChorus;
+      });
     }, 150);
-    return () => clearInterval(poll);
-  }, [images, getCurrentTime]);
-
-  const fire = () => {
-    setActive(true);
-    setImgIndex(Math.floor(Math.random() * images.length));
-
-    clearInterval(cutTimerRef.current);
-    cutTimerRef.current = setInterval(() => {
-      setImgIndex((i) => (i + 1 + Math.floor(Math.random() * (images.length - 1))) % images.length);
-    }, CUT_INTERVAL_MS);
-
-    clearTimeout(endTimerRef.current);
-    endTimerRef.current = setTimeout(() => {
+    return () => {
+      clearInterval(poll);
       clearInterval(cutTimerRef.current);
-      setActive(false);
-    }, LYRIC_DURATION_S * 1000);
-  };
-
-  useEffect(() => () => {
-    clearInterval(cutTimerRef.current);
-    clearTimeout(endTimerRef.current);
-  }, []);
+    };
+  }, [images, getCurrentTime]);
 
   if (!active || !images.length) return null;
 

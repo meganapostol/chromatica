@@ -1,17 +1,23 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { PHOTO_CREDITS, PENDING_REVIEW_NAMES } from '@/data/photoCredits';
 
 export default function Credits({ onClose }) {
+  // Latest-ref pattern keeps the keydown listener stable across re-renders
+  // even if the parent doesn't memoize onClose.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    const onKey = (e) => { if (e.key === 'Escape') onCloseRef.current?.(); };
     window.addEventListener('keydown', onKey);
+    const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
       window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = '';
+      document.body.style.overflow = prevOverflow;
     };
-  }, [onClose]);
+  }, []);
 
   return (
     <motion.div
@@ -23,6 +29,7 @@ export default function Credits({ onClose }) {
       transition={{ duration: 0.4 }}
     >
       <button
+        type="button"
         onClick={onClose}
         className="fixed top-6 right-8 font-mono-c uppercase tracking-mono z-10"
         style={{ fontSize: 11, color: 'rgba(250,250,250,0.6)' }}

@@ -104,6 +104,20 @@
     100% { opacity: 1; transform: scale(1); }
   }
 
+  /* Animated wordmark: each letter ripples through the wheel's palette. */
+  @keyframes chromatica-letter-cycle {
+    0%, 100% { color: rgba(248, 240, 227, 0.65); text-shadow: 0 0 0 transparent; }
+    10% { color: #E34234; text-shadow: 0 0 6px rgba(227,66,52,0.35); }
+    20% { color: #F2A900; text-shadow: 0 0 6px rgba(242,169,0,0.35); }
+    30% { color: #C0D725; text-shadow: 0 0 6px rgba(192,215,37,0.35); }
+    40% { color: #2E8B57; text-shadow: 0 0 6px rgba(46,139,87,0.35); }
+    50% { color: #5BB7E5; text-shadow: 0 0 6px rgba(91,183,229,0.35); }
+    60% { color: #1F4788; text-shadow: 0 0 6px rgba(31,71,136,0.4); }
+    70% { color: #8E4585; text-shadow: 0 0 6px rgba(142,69,133,0.35); }
+    80% { color: #DC143C; text-shadow: 0 0 6px rgba(220,20,60,0.35); }
+    90% { color: #F8F0E3; text-shadow: 0 0 6px rgba(248,240,227,0.4); }
+  }
+
   .scroll-hide::-webkit-scrollbar { display: none; }
   .scroll-hide { scrollbar-width: none; }
 }
