@@ -85,10 +85,20 @@ export default function Chromatica() {
       {/* AMBIENT HERO — drifting aurora (or video, if HERO_VIDEO_SRC is set) */}
       <HeroBackdrop videoSrc={HERO_VIDEO_SRC} />
 
-      {/* VIEWPORT-LEVEL SPARKLE LAYER — unbounded by the wheel's box */}
-      {!selected && (
+      {/* VIEWPORT-LEVEL SPARKLE LAYER — unbounded by the wheel's box.
+          Always mounted (canvas is cheap); we fade it via opacity instead of
+          unmounting, because conditionally unmounting a sibling at the same
+          commit as AnimatePresence's wheel↔chamber swap was crashing React's
+          reconciler with insertBefore errors. */}
+      <div
+        style={{
+          opacity: selected ? 0 : 1,
+          transition: 'opacity 0.4s ease-out',
+          pointerEvents: 'none'
+        }}
+      >
         <SparkRing colors={colors} hoveredAngle={hoverAngle} />
-      )}
+      </div>
 
       {/* WHEEL + CHAMBER share a single AnimatePresence so only one mounts at a time.
           Keys are intentionally just "wheel" / "chamber" (NOT the color id) — switching
