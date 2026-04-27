@@ -7,6 +7,11 @@ import Chamber from '@/components/chromatica/Chamber';
 import MusicPlayer from '@/components/chromatica/MusicPlayer';
 import Credits from '@/components/chromatica/Credits';
 import LyricBurst from '@/components/chromatica/LyricBurst';
+import HeroBackdrop from '@/components/chromatica/HeroBackdrop';
+
+// Drop a video at chromatica/public/hero.mp4 and uncomment the videoSrc below
+// to swap the aurora gradient for cinematic footage.
+const HERO_VIDEO_SRC = null; // e.g. '/hero.mp4'
 
 export default function Chromatica() {
   const [selectedId, setSelectedId] = useState(null);
@@ -73,12 +78,15 @@ export default function Chromatica() {
 
   return (
     <div className="relative min-h-screen w-screen chromatica-vignette overflow-hidden">
+      {/* AMBIENT HERO — drifting aurora (or video, if HERO_VIDEO_SRC is set) */}
+      <HeroBackdrop videoSrc={HERO_VIDEO_SRC} />
+
       {/* WHEEL + CHAMBER share a single AnimatePresence so only one mounts at a time */}
       <AnimatePresence mode="wait">
         {!selected ? (
           <motion.div
             key="wheel-state"
-            className="fixed inset-0 z-10 chromatica-vignette"
+            className="fixed inset-0 z-10"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1, transition: { duration: 0.5 } }}
             exit={{ opacity: 0, transition: { duration: 0.4 } }}

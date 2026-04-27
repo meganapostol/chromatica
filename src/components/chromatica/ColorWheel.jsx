@@ -97,9 +97,29 @@ export default function ColorWheel({ colors = [], onSelect, exiting = false, bur
           </filter>
           {/* Center void radial gradient: warm charcoal with depth */}
           <radialGradient id="void-gradient" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#15131A" />
-            <stop offset="55%" stopColor="#0D0C12" />
-            <stop offset="100%" stopColor="#050508" />
+            <stop offset="0%" stopColor="#1F1825" />
+            <stop offset="55%" stopColor="#120F19" />
+            <stop offset="100%" stopColor="#07060B" />
+          </radialGradient>
+          {/* Living chromatic glow inside the void — animates color over time */}
+          <radialGradient id="void-living-glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#E34234" stopOpacity="0.75">
+              <animate
+                attributeName="stop-color"
+                values="#E34234; #F2A900; #50A747; #5BB7E5; #1F4788; #8E4585; #DC143C; #E34234"
+                dur="48s"
+                repeatCount="indefinite"
+              />
+            </stop>
+            <stop offset="50%" stopColor="#1F4788" stopOpacity="0.25">
+              <animate
+                attributeName="stop-color"
+                values="#1F4788; #8E4585; #DC143C; #E34234; #F2A900; #50A747; #5BB7E5; #1F4788"
+                dur="48s"
+                repeatCount="indefinite"
+              />
+            </stop>
+            <stop offset="100%" stopColor="#000000" stopOpacity="0" />
           </radialGradient>
           {/* Soft cream pulse for individual glyphs */}
           <filter id="glyph-glow" x="-100%" y="-100%" width="300%" height="300%">
@@ -115,26 +135,26 @@ export default function ColorWheel({ colors = [], onSelect, exiting = false, bur
         <g style={{ pointerEvents: 'none' }}>
           <circle
             cx={cx} cy={cy} r={rOuterColor + 4}
-            fill="none" stroke={CREAM} strokeWidth="1.2"
-            opacity="0.10"
+            fill="none" stroke={CREAM} strokeWidth="1.6"
+            opacity="0.22"
             style={{ filter: 'url(#track-glow)' }}
           />
           <circle
             cx={cx} cy={cy} r={rOuterColor + 4}
-            fill="none" stroke={CREAM} strokeWidth="0.6"
-            opacity="0.18"
+            fill="none" stroke={CREAM} strokeWidth="0.7"
+            opacity="0.32"
             strokeDasharray="2 5"
           />
           <circle
             cx={cx} cy={cy} r={rInnerColor - 4}
-            fill="none" stroke={CREAM} strokeWidth="1.2"
-            opacity="0.10"
+            fill="none" stroke={CREAM} strokeWidth="1.6"
+            opacity="0.22"
             style={{ filter: 'url(#track-glow)' }}
           />
           <circle
             cx={cx} cy={cy} r={rInnerColor - 4}
-            fill="none" stroke={CREAM} strokeWidth="0.6"
-            opacity="0.16"
+            fill="none" stroke={CREAM} strokeWidth="0.7"
+            opacity="0.30"
           />
         </g>
 
@@ -174,12 +194,12 @@ export default function ColorWheel({ colors = [], onSelect, exiting = false, bur
                   animation: `slab-assemble 0.6s cubic-bezier(0.22, 1, 0.36, 1) ${slabDelay}s forwards`
                 }}
               >
-                {/* Outer luminous glow */}
+                {/* Outer luminous glow — beefier so the wheel actually radiates */}
                 <path
-                  d={sectorPath(cx, cy, rOuterColor * lift + 12, rInnerColor - 4, start, end)}
+                  d={sectorPath(cx, cy, rOuterColor * lift + 18, rInnerColor - 8, start, end)}
                   fill={color.hex}
-                  opacity={isHover ? 0.55 : 0.4}
-                  style={{ filter: 'blur(12px)', pointerEvents: 'none' }}
+                  opacity={isHover ? 0.75 : 0.55}
+                  style={{ filter: 'blur(16px)', pointerEvents: 'none' }}
                 />
                 <path
                   d={path}
@@ -234,10 +254,17 @@ export default function ColorWheel({ colors = [], onSelect, exiting = false, bur
           })}
         </g>
 
-        {/* Center void: warm charcoal with radial depth (decorative; below sectors) */}
+        {/* Center void: warm charcoal base + a slow living chromatic glow.
+            The breathing glow gives the void life even when no music is playing. */}
         <g style={{ pointerEvents: 'none' }}>
           <circle cx={cx} cy={cy} r={rVoid} fill="url(#void-gradient)" />
-          <circle cx={cx} cy={cy} r={rVoid} fill="none" stroke={CREAM} strokeWidth="0.8" opacity="0.12" />
+          <circle
+            cx={cx} cy={cy} r={rVoid * 0.82}
+            fill="url(#void-living-glow)"
+            className="chromatica-void-glow"
+            style={{ mixBlendMode: 'screen', transformOrigin: `${cx}px ${cy}px` }}
+          />
+          <circle cx={cx} cy={cy} r={rVoid} fill="none" stroke={CREAM} strokeWidth="1" opacity="0.22" />
         </g>
       </svg>
 
