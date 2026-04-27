@@ -228,19 +228,33 @@ function ToggleBtn({ active, onClick, children }) {
 
 // Painted CHROMATICA wordmark — Megan's hand-lettered logo, breathing softly.
 // The PNG lives in /public/Biro Script Plus.png (transparent BG, 2000×500).
-// Typographic wordmark: Sacramento (love-letter calligraphic script)
-// at a confident 48px, with each letter independently cycling through the
-// wheel's palette on a phase-offset 18s loop.
+// Typographic wordmark with per-letter chromatic color cycle.
+//
+// To swap the font: change WORDMARK_FONT to one of the listed presets
+// below — index.html already preloads all three. Adjust SIZE to taste
+// (calligraphic fonts usually need to be larger than serifs to read).
+const WORDMARK_PRESETS = {
+  tangerine: { family: "'Tangerine', cursive",        weight: 700, size: 68, spacing: '0.01em',  top: -2, left: 28 },
+  italianno: { family: "'Italianno', cursive",        weight: 400, size: 64, spacing: '0.01em',  top: 0,  left: 28 },
+  playfair:  { family: "'Playfair Display', serif",   weight: 800, size: 32, spacing: '-0.01em', top: 12, left: 28, italic: true },
+  cormorant: { family: "'Cormorant Garamond', serif", weight: 600, size: 38, spacing: '0.005em', top: 14, left: 28, italic: true }
+};
+const WORDMARK_FONT = 'tangerine';   // ← change this to swap
+
 function ChromaticaWordmark() {
+  const preset = WORDMARK_PRESETS[WORDMARK_FONT];
   const letters = 'Chromatica'.split('');
   return (
     <div
-      className="absolute top-3 left-7 z-20 select-none"
+      className="absolute z-20 select-none"
       style={{
-        fontFamily: "'Sacramento', cursive",
-        fontSize: 48,
-        fontWeight: 400,
-        letterSpacing: '0.015em',
+        top: preset.top,
+        left: preset.left,
+        fontFamily: preset.family,
+        fontSize: preset.size,
+        fontWeight: preset.weight,
+        fontStyle: preset.italic ? 'italic' : 'normal',
+        letterSpacing: preset.spacing,
         lineHeight: 1,
         animation: 'chromatica-logo-breathe 7s ease-in-out infinite'
       }}
