@@ -1,15 +1,12 @@
 import React, { useEffect, useRef } from 'react';
 import { hexToRgb } from '@/lib/chromatica-utils';
 
-// Full-viewport starfield + color celebration around the wheel.
-// Three layers, all drifting:
-//   1. INNER ambient   — dense ring hugging the wheel, drifts inward, twinkles
-//   2. CONSTELLATION   — distant stars across the entire viewport
-//   3. EXPLOSIONS      — clustered bursts (3-6 fire simultaneously) close to
-//                        the wheel — the celebration, not a sparse trickle
-//
-// The canvas is fixed to the viewport (`fixed inset-0`) so particles never
-// hit a 720px box edge. `active` controls fade — never unmount.
+// Tight ring of fireworks hugging the color ring's outer edge.
+//   1. INNER ambient — dense halo at the slab perimeter, twinkling
+//   2. EXPLOSIONS    — clusters of 3-6 simultaneous bursts at the perimeter,
+//                      short-lived so they stay tight rather than drifting
+// (Constellation field removed — InteractiveDots is the broader chromatic
+//  layer now; this component is purely the close-in celebration.)
 export default function SparkRing({ colors = [], hoveredAngle = null, active = true }) {
   const canvasRef = useRef(null);
   const rafRef = useRef(null);
@@ -82,9 +79,8 @@ export default function SparkRing({ colors = [], hoveredAngle = null, active = t
     function spawnInner() {
       const colorR = colorRingOuter();
       const angle = Math.random() * Math.PI * 2;
-      // Spawn just past the color ring's outer edge, drift inward to it.
-      // No empty gap between the painted slabs and the sparks anymore.
-      const r = colorR * (1.02 + Math.random() * 0.38);
+      // Spawn in a tight halo right at the color ring's outer edge.
+      const r = colorR * (1.02 + Math.random() * 0.20);
       const isStar = Math.random() < 0.30;
       return {
         kind: isStar ? 'star' : 'dot',
@@ -100,40 +96,7 @@ export default function SparkRing({ colors = [], hoveredAngle = null, active = t
       };
     }
 
-    // ---- LAYER 2: CONSTELLATION (sparse, all over viewport) ---------------
-    const CONST_COUNT = 220;
-    let constellation = [];
-    function spawnConstellation() {
-      const { w, h } = dimsRef.current;
-      const colorR = colorRingOuter();
-      // Avoid the wheel area — place outside the color ring.
-      let x, y, dist;
-      let attempts = 0;
-      do {
-        x = Math.random() * w;
-        y = Math.random() * h;
-        const { cx, cy } = center();
-        dist = Math.hypot(x - cx, y - cy);
-        attempts++;
-      } while (dist < colorR * 1.05 && attempts < 8);
-      return {
-        x, y,
-        size: 0.6 + Math.random() * 1.6,
-        twinkleSpeed: 0.012 + Math.random() * 0.04,
-        twinklePhase: Math.random() * Math.PI * 2,
-        baseAlpha: 0.18 + Math.random() * 0.32,
-        kind: Math.random() < 0.18 ? 'star' : 'dot',
-        // Hue tint for constellation: pull from the wheel's palette so distant
-        // stars echo the colors (very slowly varied).
-        colorAngle: Math.random() * 360,
-        life: Math.random(),
-        decay: 0.0006 + Math.random() * 0.0012
-      };
-    }
-    function rebuildConstellation() {
-      constellation = Array.from({ length: CONST_COUNT }, () => spawnConstellation());
-    }
-    rebuildConstellation();
+    // (Constellation removed — InteractiveDots covers the broader field.)
 
     // ---- LAYER 3: EXPLOSIONS (clustered bursts close to the wheel) -------
     let bursts = [];
@@ -143,28 +106,26 @@ export default function SparkRing({ colors = [], hoveredAngle = null, active = t
       const colorR = colorRingOuter();
       const { cx, cy } = center();
       const angle = originAngle ?? Math.random() * Math.PI * 2;
-      // Bursts ignite right at the color ring's outer edge — visually they
-      // come OUT OF the colored slabs, not from somewhere in space outside.
       const ox = cx + Math.cos(angle) * (colorR * 1.01);
       const oy = cy + Math.sin(angle) * (colorR * 1.01);
-      const count = 26 + Math.floor(Math.random() * 18);
+      const count = 22 + Math.floor(Math.random() * 16);
       const deg = (angle * 180 / Math.PI + 90 + 360) % 360;
       const baseColor = colorAtAngle(deg);
       for (let i = 0; i < count; i++) {
-        const spread = (Math.random() - 0.5) * 1.6;       // ±0.8 rad fan
+        const spread = (Math.random() - 0.5) * 1.4;
         const dir = angle + spread;
-        // Lower velocity so bursts stay close to the wheel — celebration,
-        // not stars drifting off into deep space.
-        const speed = 0.6 + Math.random() * 1.8;
+        // Tight ring of fireworks: low velocity + short life, so they stay
+        // a tight halo at the color ring's edge instead of drifting off.
+        const speed = 0.35 + Math.random() * 1.0;
         bursts.push({
           x: ox,
           y: oy,
           vx: Math.cos(dir) * speed,
           vy: Math.sin(dir) * speed,
           life: 0,
-          maxLife: 60 + Math.random() * 60,
-          size: 1.6 + Math.random() * 2.6,
-          color: jitter(baseColor, 32)
+          maxLife: 38 + Math.random() * 36,
+          size: 1.5 + Math.random() * 2.2,
+          color: jitter(baseColor, 30)
         });
       }
     }
@@ -248,22 +209,6 @@ export default function SparkRing({ colors = [], hoveredAngle = null, active = t
 
         if (p.kind === 'star') drawStar(x, y, p, alpha);
         else                   drawDot(x, y, p, alpha);
-      }
-
-      // CONSTELLATION (distant stars)
-      for (let i = 0; i < constellation.length; i++) {
-        const s = constellation[i];
-        s.life += s.decay;
-        s.twinklePhase += s.twinkleSpeed;
-        if (s.life > 1) { constellation[i] = spawnConstellation(); continue; }
-
-        const fade = Math.sin(s.life * Math.PI);
-        const twinkle = 0.45 + 0.55 * Math.sin(s.twinklePhase);
-        const alpha = s.baseAlpha * fade * twinkle;
-        const color = colorAtAngle(s.colorAngle);
-
-        if (s.kind === 'star') drawStar(s.x, s.y, s, alpha, color);
-        else                   drawDot(s.x, s.y, s, alpha, color);
       }
 
       // EXPLOSIONS — fire a cluster (3–6 simultaneous bursts) every 1.5–3s.

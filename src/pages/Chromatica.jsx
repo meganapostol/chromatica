@@ -9,6 +9,7 @@ import Credits from '@/components/chromatica/Credits';
 import LyricBurst from '@/components/chromatica/LyricBurst';
 import HeroBackdrop from '@/components/chromatica/HeroBackdrop';
 import InteractiveDots from '@/components/chromatica/InteractiveDots';
+import SparkRing from '@/components/chromatica/SparkRing';
 import VoidBlobs from '@/components/chromatica/VoidBlobs';
 
 // Drop a video at chromatica/public/hero.mp4 and uncomment the videoSrc below
@@ -84,10 +85,12 @@ export default function Chromatica() {
       <HeroBackdrop videoSrc={HERO_VIDEO_SRC} />
 
       {/* INTERACTIVE DOT GRID — Chromatica-palette dots that repel from the
-          cursor. Replaces the previous starfield. Always mounted so the DOM
-          tree is stable through chamber transitions; faded via the `active`
-          prop when a chamber is open. */}
+          cursor. Field-level chromatic context across the viewport. */}
       <InteractiveDots active={!selected} />
+
+      {/* FIREWORKS RING — clustered bursts hugging the color ring's perimeter.
+          Layers over the dot grid via mix-blend-mode: screen. */}
+      <SparkRing colors={colors} active={!selected} />
 
       {/* WHEEL — always mounted, faded by CSS when a chamber is open.
           We deliberately do NOT use AnimatePresence to swap wheel↔chamber:
