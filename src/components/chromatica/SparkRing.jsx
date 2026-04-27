@@ -3,14 +3,14 @@ import { hexToRgb } from '@/lib/chromatica-utils';
 
 // Full-viewport starfield + color celebration around the wheel.
 // Three layers, all drifting:
-//   1. INNER ambient   — drifts inward toward wheel perimeter, twinkles
-//   2. CONSTELLATION   — sparse distant stars across the entire viewport
-//   3. EXPLOSIONS      — periodic bursts at the wheel's perimeter that
-//                         fly outward across the whole page
+//   1. INNER ambient   — dense ring hugging the wheel, drifts inward, twinkles
+//   2. CONSTELLATION   — distant stars across the entire viewport
+//   3. EXPLOSIONS      — clustered bursts (3-6 fire simultaneously) close to
+//                        the wheel — the celebration, not a sparse trickle
 //
 // The canvas is fixed to the viewport (`fixed inset-0`) so particles never
-// hit a 720px box edge.
-export default function SparkRing({ colors = [], hoveredAngle = null }) {
+// hit a 720px box edge. `active` controls fade — never unmount.
+export default function SparkRing({ colors = [], hoveredAngle = null, active = true }) {
   const canvasRef = useRef(null);
   const rafRef = useRef(null);
   const dimsRef = useRef({ w: 0, h: 0 });
@@ -126,33 +126,43 @@ export default function SparkRing({ colors = [], hoveredAngle = null }) {
     }
     rebuildConstellation();
 
-    // ---- LAYER 3: EXPLOSIONS (perimeter bursts flying outward) -----------
+    // ---- LAYER 3: EXPLOSIONS (clustered bursts close to the wheel) -------
     let bursts = [];
-    let nextBurstAt = performance.now() + 800 + Math.random() * 1600;
+    let nextBurstAt = performance.now() + 400;
 
     function fireBurst(originAngle = null) {
       const wR = wheelRadius();
       const { cx, cy } = center();
       const angle = originAngle ?? Math.random() * Math.PI * 2;
-      const ox = cx + Math.cos(angle) * (wR * 1.04);
-      const oy = cy + Math.sin(angle) * (wR * 1.04);
-      const count = 16 + Math.floor(Math.random() * 14);
+      const ox = cx + Math.cos(angle) * (wR * 1.05);
+      const oy = cy + Math.sin(angle) * (wR * 1.05);
+      const count = 26 + Math.floor(Math.random() * 18);
       const deg = (angle * 180 / Math.PI + 90 + 360) % 360;
       const baseColor = colorAtAngle(deg);
       for (let i = 0; i < count; i++) {
-        const spread = (Math.random() - 0.5) * 1.4;       // ±0.7 rad fan
+        const spread = (Math.random() - 0.5) * 1.6;       // ±0.8 rad fan
         const dir = angle + spread;
-        const speed = 1.4 + Math.random() * 3.2;          // travels much further
+        // Lower velocity so bursts stay close to the wheel — celebration,
+        // not stars drifting off into deep space.
+        const speed = 0.6 + Math.random() * 1.8;
         bursts.push({
           x: ox,
           y: oy,
           vx: Math.cos(dir) * speed,
           vy: Math.sin(dir) * speed,
           life: 0,
-          maxLife: 90 + Math.random() * 90,
-          size: 1.4 + Math.random() * 2.6,
-          color: jitter(baseColor, 36)
+          maxLife: 60 + Math.random() * 60,
+          size: 1.6 + Math.random() * 2.6,
+          color: jitter(baseColor, 32)
         });
+      }
+    }
+    function fireBurstCluster() {
+      // 3–6 simultaneous bursts at random angles — actually feels like a
+      // celebration instead of one lonely firework at a time.
+      const n = 3 + Math.floor(Math.random() * 4);
+      for (let i = 0; i < n; i++) {
+        fireBurst(Math.random() * Math.PI * 2);
       }
     }
 
@@ -245,14 +255,15 @@ export default function SparkRing({ colors = [], hoveredAngle = null }) {
         else                   drawDot(s.x, s.y, s, alpha, color);
       }
 
-      // EXPLOSIONS — frequent, fly outward all the way to viewport edge
+      // EXPLOSIONS — fire a cluster (3–6 simultaneous bursts) every 1.5–3s.
+      // Plus a 40% chance of a follow-up cluster ~250ms later for layered
+      // celebration energy.
       if (now >= nextBurstAt) {
-        fireBurst();
-        // 30% chance of a quick double-burst on the opposite side
-        if (Math.random() < 0.3) {
-          setTimeout(() => fireBurst(Math.random() * Math.PI * 2), 180);
+        fireBurstCluster();
+        if (Math.random() < 0.4) {
+          setTimeout(() => fireBurstCluster(), 240);
         }
-        nextBurstAt = now + 2400 + Math.random() * 3200;
+        nextBurstAt = now + 1500 + Math.random() * 1500;
       }
       for (let i = bursts.length - 1; i >= 0; i--) {
         const e = bursts[i];
@@ -296,7 +307,12 @@ export default function SparkRing({ colors = [], hoveredAngle = null }) {
       ref={canvasRef}
       aria-hidden="true"
       className="fixed inset-0 pointer-events-none"
-      style={{ zIndex: 1, mixBlendMode: 'screen' }}
+      style={{
+        zIndex: 1,
+        mixBlendMode: 'screen',
+        opacity: active ? 1 : 0,
+        transition: 'opacity 0.5s ease'
+      }}
     />
   );
 }

@@ -243,32 +243,39 @@ function ToggleBtn({ active, onClick, children }) {
 
 // Painted CHROMATICA wordmark — Megan's hand-lettered logo, breathing softly.
 // The PNG lives in /public/Biro Script Plus.png (transparent BG, 2000×500).
+// Typographic wordmark: Cormorant Garamond italic (the chamber display face)
+// at a confident 38px, with each letter independently cycling through the
+// wheel's palette on a phase-offset 18s loop.
 function ChromaticaWordmark() {
+  const letters = 'Chromatica'.split('');
   return (
     <div
-      className="absolute top-5 left-6 z-20 select-none"
+      className="absolute top-5 left-7 z-20 select-none"
+      style={{
+        fontFamily: "'Cormorant Garamond', serif",
+        fontSize: 38,
+        fontStyle: 'italic',
+        fontWeight: 600,
+        letterSpacing: '0.005em',
+        lineHeight: 1,
+        animation: 'chromatica-logo-breathe 7s ease-in-out infinite'
+      }}
       aria-label="Chromatica"
     >
-      <img
-        src="/Biro%20Script%20Plus.png"
-        alt="Chromatica"
-        draggable={false}
-        style={{
-          height: 56,
-          width: 'auto',
-          objectFit: 'contain',
-          animation: 'chromatica-logo-breathe 7s ease-in-out infinite',
-          filter: 'drop-shadow(0 0 12px rgba(248, 240, 227, 0.18))',
-          willChange: 'transform, opacity, filter',
-          imageRendering: 'auto'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.filter = 'drop-shadow(0 0 18px rgba(248, 240, 227, 0.45))';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.filter = 'drop-shadow(0 0 12px rgba(248, 240, 227, 0.18))';
-        }}
-      />
+      {letters.map((letter, i) => (
+        <span
+          key={i}
+          aria-hidden="true"
+          style={{
+            display: 'inline-block',
+            animation: 'chromatica-letter-cycle 18s ease-in-out infinite',
+            animationDelay: `${i * -1.8}s`,
+            willChange: 'color, text-shadow'
+          }}
+        >
+          {letter}
+        </span>
+      ))}
     </div>
   );
 }

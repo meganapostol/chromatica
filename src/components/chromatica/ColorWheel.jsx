@@ -72,18 +72,19 @@ export default function ColorWheel({ colors = [], onSelect, exiting = false, bur
         transition: 'opacity 0.4s ease-out'
       }}
     >
-      {/* HTML overlay slot for content drawn inside the void (e.g. animated blobs).
-          Sized to the void diameter (36% of the wheel container) and clipped to a circle. */}
+      {/* HTML overlay slot for content drawn inside the glyph ring (e.g. blobs).
+          Sized to fill the area inside the glyphs (just shy of the glyph ring at
+          ~0.27 radius → 52% of the wheel diameter), clipped to a circle. */}
       {voidSlot && (
         <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
           <div
             style={{
-              width: '36%',
+              width: '52%',
               aspectRatio: '1',
               borderRadius: '50%',
               overflow: 'hidden',
               mixBlendMode: 'screen',
-              opacity: 0.85
+              opacity: 0.95
             }}
           >
             {voidSlot}

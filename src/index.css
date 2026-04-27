@@ -132,10 +132,27 @@
     transform-origin: center center;
   }
 
-  /* Painted wordmark: gentle breath in scale & opacity. */
+  /* Wordmark wrapper: gentle breath in scale & opacity. */
   @keyframes chromatica-logo-breathe {
-    0%, 100% { transform: scale(1);     opacity: 0.92; }
-    50%      { transform: scale(1.02);  opacity: 1.00; }
+    0%, 100% { transform: scale(1);     opacity: 0.95; }
+    50%      { transform: scale(1.015); opacity: 1.00; }
+  }
+
+  /* Wordmark letters: each ripples through the wheel's palette. */
+  @keyframes chromatica-letter-cycle {
+    0%, 100% {
+      color: #F8F0E3;
+      text-shadow: 0 0 12px rgba(248, 240, 227, 0.25);
+    }
+    10% { color: #E34234; text-shadow: 0 0 14px rgba(227, 66, 52, 0.55); }
+    20% { color: #F2A900; text-shadow: 0 0 14px rgba(242, 169, 0, 0.55); }
+    30% { color: #C0D725; text-shadow: 0 0 14px rgba(192, 215, 37, 0.55); }
+    40% { color: #2E8B57; text-shadow: 0 0 14px rgba(46, 139, 87, 0.55); }
+    50% { color: #5BB7E5; text-shadow: 0 0 14px rgba(91, 183, 229, 0.55); }
+    60% { color: #1F4788; text-shadow: 0 0 14px rgba(31, 71, 136, 0.6);  }
+    70% { color: #8E4585; text-shadow: 0 0 14px rgba(142, 69, 133, 0.55); }
+    80% { color: #DC143C; text-shadow: 0 0 14px rgba(220, 20, 60, 0.55); }
+    90% { color: #F8F0E3; text-shadow: 0 0 14px rgba(248, 240, 227, 0.50); }
   }
 
   /* Void blobs: slow rotation as a single group. */
