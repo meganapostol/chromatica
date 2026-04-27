@@ -100,106 +100,103 @@ export default function Chromatica() {
         <SparkRing colors={colors} hoveredAngle={hoverAngle} />
       </div>
 
-      {/* WHEEL + CHAMBER share a single AnimatePresence so only one mounts at a time.
-          Keys are intentionally just "wheel" / "chamber" (NOT the color id) — switching
-          between companion colors should re-render Chamber in place, not unmount it.
-          Unmounting on every companion click is what was crashing AnimatePresence. */}
-      <AnimatePresence mode="wait" initial={false}>
-        {!selected ? (
-          <motion.div
-            key="wheel"
-            className="fixed inset-0 z-10"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1, transition: { duration: 0.5 } }}
-            exit={{ opacity: 0, transition: { duration: 0.4 } }}
+      {/* WHEEL — always mounted, faded by CSS when a chamber is open.
+          We deliberately do NOT use AnimatePresence to swap wheel↔chamber:
+          framer-motion's PresenceChild was crashing React's reconciler with
+          insertBefore errors on color clicks. A plain CSS opacity fade gives
+          the same visual transition without any DOM-tree gymnastics. */}
+      <div
+        className="fixed inset-0 z-10"
+        style={{
+          opacity: selected ? 0 : 1,
+          pointerEvents: selected ? 'none' : 'auto',
+          transition: 'opacity 0.4s ease-out'
+        }}
+      >
+        {/* top-left animated wordmark */}
+        <ChromaticaWordmark />
+
+        {/* top-right meta */}
+        <div className="absolute top-6 right-8 z-20 flex items-center gap-6">
+          <button
+            type="button"
+            onClick={openCredits}
+            className="font-mono-c uppercase tracking-mono"
+            style={{ fontSize: 11, color: 'rgba(248,240,227,0.6)' }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(248,240,227,1)')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(248,240,227,0.6)')}
           >
-            {/* top-left animated wordmark */}
-            <ChromaticaWordmark />
+            credits
+          </button>
+        </div>
 
-            {/* top-right meta */}
-            <div className="absolute top-6 right-8 z-20 flex items-center gap-6">
-              <button
-                type="button"
-                onClick={openCredits}
-                className="font-mono-c uppercase tracking-mono"
-                style={{ fontSize: 11, color: 'rgba(248,240,227,0.6)' }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(248,240,227,1)')}
-                onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(248,240,227,0.6)')}
-              >
-                credits
-              </button>
-            </div>
-
-            {/* WHEEL — dead-centered in viewport */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="pointer-events-auto">
-                <ColorWheel
-                  colors={colors}
-                  onSelect={handleSelect}
-                  onHoverAngle={setHoverAngle}
-                  voidSlot={<VoidBlobs />}
-                  burstSlot={
-                    <LyricBurst
-                      images={colors.map((c) => c.image).filter(Boolean)}
-                      getCurrentTime={getYTTime}
-                      size={WHEEL_SIZE}
-                      voidRadius={WHEEL_VOID_RADIUS}
-                    />
-                  }
+        {/* WHEEL — dead-centered in viewport */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="pointer-events-auto">
+            <ColorWheel
+              colors={colors}
+              onSelect={handleSelect}
+              onHoverAngle={setHoverAngle}
+              voidSlot={<VoidBlobs />}
+              burstSlot={
+                <LyricBurst
+                  images={colors.map((c) => c.image).filter(Boolean)}
+                  getCurrentTime={getYTTime}
+                  size={WHEEL_SIZE}
+                  voidRadius={WHEEL_VOID_RADIUS}
                 />
-              </div>
-            </div>
-
-            {/* bottom invitation + toggles (invitation fades in after the wheel finishes assembling) */}
-            <div className="absolute bottom-10 left-0 right-0 flex flex-col items-center gap-4 z-20">
-              <motion.div
-                className="font-display italic"
-                style={{ fontSize: 13, color: 'rgba(250,250,250,0.6)' }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1, transition: { duration: 1.2, delay: 3.0 } }}
-              >
-                click any color to enter her chamber
-              </motion.div>
-              <div
-                className="flex items-center gap-5"
-                style={{
-                  padding: '8px 20px',
-                  borderRadius: 9999,
-                  backgroundColor: 'rgba(15, 12, 18, 0.55)',
-                  border: '1px solid rgba(248, 240, 227, 0.14)',
-                  backdropFilter: 'blur(8px)',
-                  WebkitBackdropFilter: 'blur(8px)'
-                }}
-              >
-                <ToggleBtn active={musicMode} onClick={enableMusic}>
-                  with music
-                </ToggleBtn>
-                <span style={{ color: 'rgba(248,240,227,0.28)', fontSize: 12 }}>·</span>
-                <ToggleBtn active={!musicMode} onClick={disableMusic}>
-                  in silence
-                </ToggleBtn>
-              </div>
-            </div>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="chamber"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1, transition: { duration: 0.4 } }}
-            exit={{ opacity: 0, transition: { duration: 0.4 } }}
-          >
-            <Chamber
-              color={selected}
-              index={selectedIndex >= 0 ? selectedIndex : 0}
-              total={30}
-              onBack={handleBack}
-              musicMode={musicMode}
-              allColors={colors}
-              onSelectCompanion={handleSelectCompanion}
+              }
             />
+          </div>
+        </div>
+
+        {/* bottom invitation + toggles (invitation fades in after the wheel finishes assembling) */}
+        <div className="absolute bottom-10 left-0 right-0 flex flex-col items-center gap-4 z-20">
+          <motion.div
+            className="font-display italic"
+            style={{ fontSize: 13, color: 'rgba(250,250,250,0.6)' }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1, transition: { duration: 1.2, delay: 3.0 } }}
+          >
+            click any color to enter her chamber
           </motion.div>
-        )}
-      </AnimatePresence>
+          <div
+            className="flex items-center gap-5"
+            style={{
+              padding: '8px 20px',
+              borderRadius: 9999,
+              backgroundColor: 'rgba(15, 12, 18, 0.55)',
+              border: '1px solid rgba(248, 240, 227, 0.14)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)'
+            }}
+          >
+            <ToggleBtn active={musicMode} onClick={enableMusic}>
+              with music
+            </ToggleBtn>
+            <span style={{ color: 'rgba(248,240,227,0.28)', fontSize: 12 }}>·</span>
+            <ToggleBtn active={!musicMode} onClick={disableMusic}>
+              in silence
+            </ToggleBtn>
+          </div>
+        </div>
+      </div>
+
+      {/* CHAMBER — mounted only when a color is selected. Plain conditional
+          mount + CSS fade-in via the chamber's own background animation. */}
+      {selected && (
+        <div className="fixed inset-0 z-20" style={{ animation: 'chromatica-fade-in 0.4s ease-out' }}>
+          <Chamber
+            color={selected}
+            index={selectedIndex >= 0 ? selectedIndex : 0}
+            total={30}
+            onBack={handleBack}
+            musicMode={musicMode}
+            allColors={colors}
+            onSelectCompanion={handleSelectCompanion}
+          />
+        </div>
+      )}
 
       {/* CREDITS PANEL */}
       <AnimatePresence>
