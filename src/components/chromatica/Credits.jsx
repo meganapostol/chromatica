@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { PHOTO_CREDITS, PENDING_REVIEW_NAMES } from '@/data/photoCredits';
 
 export default function Credits({ onClose }) {
   useEffect(() => {
@@ -66,7 +67,36 @@ export default function Credits({ onClose }) {
         </Section>
 
         <Section label="photography">
-          <p style={S.body}>[Photography credits pending]</p>
+          <p className="font-body" style={{ ...S.body, marginBottom: 24, color: 'rgba(250,250,250,0.6)', fontSize: 14 }}>
+            All images sourced from Wikimedia Commons. Photographers and licenses below.
+          </p>
+          <div className="space-y-6">
+            {PHOTO_CREDITS.map((c) => (
+              <div key={c.name}>
+                <div className="font-display italic" style={{ fontSize: 16, color: '#FAFAFA', marginBottom: 4 }}>
+                  {c.name}
+                </div>
+                <div className="font-body" style={{ fontSize: 14, lineHeight: 1.5, color: 'rgba(250,250,250,0.7)' }}>
+                  {c.photographer} · {c.license}
+                </div>
+                <a
+                  href={c.source}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-mono-c break-all"
+                  style={{ fontSize: 11, color: 'rgba(250,250,250,0.45)', textDecoration: 'none', wordBreak: 'break-all' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(250,250,250,0.9)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(250,250,250,0.45)')}
+                >
+                  {c.source}
+                </a>
+              </div>
+            ))}
+          </div>
+          <div className="hairline my-10" />
+          <p className="font-body" style={{ fontSize: 13, lineHeight: 1.6, color: 'rgba(250,250,250,0.5)' }}>
+            Pending manual attribution review (Wikimedia Commons sources, awaiting photographer and license confirmation): {PENDING_REVIEW_NAMES.join(', ')}.
+          </p>
         </Section>
 
         <Section label="sources">
