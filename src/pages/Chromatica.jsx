@@ -8,7 +8,6 @@ import Credits from '@/components/chromatica/Credits';
 import LyricBurst from '@/components/chromatica/LyricBurst';
 import HeroBackdrop from '@/components/chromatica/HeroBackdrop';
 import InteractiveDots from '@/components/chromatica/InteractiveDots';
-import SparkRing from '@/components/chromatica/SparkRing';
 import VoidBlobs from '@/components/chromatica/VoidBlobs';
 import GuideAgent from '@/components/chromatica/GuideAgent';
 
@@ -87,10 +86,6 @@ export default function Chromatica() {
       {/* INTERACTIVE DOT GRID — Chromatica-palette dots that repel from the
           cursor. Field-level chromatic context across the viewport. */}
       <InteractiveDots active={!selected} />
-
-      {/* FIREWORKS RING — clustered bursts hugging the color ring's perimeter.
-          Layers over the dot grid via mix-blend-mode: screen. */}
-      <SparkRing colors={colors} active={!selected} />
 
       {/* WHEEL — always mounted, faded by CSS when a chamber is open.
           We deliberately do NOT use AnimatePresence to swap wheel↔chamber:
