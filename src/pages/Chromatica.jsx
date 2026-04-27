@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
 import COLORS from '@/data/colors';
 import { resolveImage } from '@/data/imageMap';
 import ColorWheel, { WHEEL_SIZE, WHEEL_VOID_RADIUS } from '@/components/chromatica/ColorWheel';
@@ -166,12 +165,15 @@ export default function Chromatica() {
         </div>
 
         {/* "click any color" — its OWN pill, ABOVE the wheel, readable on
-            any background. Sits just under the nav. */}
-        <motion.div
+            any background. Sits just under the nav. CSS-driven fade-in,
+            no framer-motion (which had been causing insertBefore crashes). */}
+        <div
           className="absolute left-0 right-0 z-20 flex justify-center"
-          style={{ top: 110 }}
-          initial={{ opacity: 0, y: -6 }}
-          animate={{ opacity: 1, y: 0, transition: { duration: 1.0, delay: 1.6 } }}
+          style={{
+            top: 110,
+            opacity: 0,
+            animation: 'chromatica-prompt-in 1s ease-out 1.6s forwards'
+          }}
         >
           <div
             className="font-display italic"
@@ -188,7 +190,7 @@ export default function Chromatica() {
           >
             click any color to enter her chamber
           </div>
-        </motion.div>
+        </div>
 
         {/* WHEEL — dead-centered in viewport */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -229,10 +231,9 @@ export default function Chromatica() {
         </div>
       )}
 
-      {/* CREDITS PANEL */}
-      <AnimatePresence>
-        {creditsOpen && <Credits onClose={handleCloseCredits} />}
-      </AnimatePresence>
+      {/* CREDITS PANEL — plain conditional render. Credits owns its own
+          opacity fade-in via CSS so we don't need AnimatePresence. */}
+      {creditsOpen && <Credits onClose={handleCloseCredits} />}
 
       {/* PERSISTENT MUSIC PLAYER */}
       <MusicPlayer ref={playerRef} />

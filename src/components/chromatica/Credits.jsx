@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
 import { PHOTO_CREDITS, PENDING_REVIEW_NAMES } from '@/data/photoCredits';
 
 export default function Credits({ onClose }) {
@@ -20,13 +19,12 @@ export default function Credits({ onClose }) {
   }, []);
 
   return (
-    <motion.div
+    <div
       className="fixed inset-0 z-[80] overflow-y-auto"
-      style={{ backgroundColor: '#050508' }}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.4 }}
+      style={{
+        backgroundColor: '#050508',
+        animation: 'chromatica-fade-in 0.4s ease-out'
+      }}
     >
       <button
         type="button"
@@ -157,7 +155,7 @@ export default function Credits({ onClose }) {
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
