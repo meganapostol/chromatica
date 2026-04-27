@@ -277,17 +277,19 @@ function ToggleBtn({ active, onClick, children }) {
 // below — index.html already preloads all three. Adjust SIZE to taste
 // (calligraphic fonts usually need to be larger than serifs to read).
 const WORDMARK_PRESETS = {
+  jost:      { family: "'Jost', sans-serif",          weight: 500, size: 28, spacing: '0.18em',  top: 14, left: 28, uppercase: true },
   tangerine: { family: "'Tangerine', cursive",        weight: 700, size: 68, spacing: '0.01em',  top: -2, left: 28 },
   italianno: { family: "'Italianno', cursive",        weight: 400, size: 64, spacing: '0.01em',  top: 0,  left: 28 },
   playfair:  { family: "'Playfair Display', serif",   weight: 800, size: 32, spacing: '-0.01em', top: 12, left: 28, italic: true },
   cormorant: { family: "'Cormorant Garamond', serif", weight: 600, size: 38, spacing: '0.005em', top: 14, left: 28, italic: true }
 };
-const WORDMARK_FONT = 'italianno';   // ← change this to swap
+const WORDMARK_FONT = 'jost';   // ← change this to swap
 
 // Centered in the nav bar; top/left positioning is handled by the parent flex.
 function ChromaticaWordmark() {
   const preset = WORDMARK_PRESETS[WORDMARK_FONT];
-  const letters = 'Chromatica'.split('');
+  const word = preset.uppercase ? 'CHROMATICA' : 'Chromatica';
+  const letters = word.split('');
   return (
     <div
       className="select-none"
