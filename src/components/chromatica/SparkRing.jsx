@@ -39,10 +39,18 @@ export default function SparkRing({ colors = [], hoveredAngle = null, active = t
       const { w, h } = dimsRef.current;
       return { cx: w / 2, cy: h / 2 };
     }
+    // Container radius (the wheel's bounding square half-width). The visible
+    // colored sectors only fill 0.84 of this — the rest is empty space we
+    // don't want sparks drifting through. Use colorRingOuter() for the
+    // actual outer edge of the painted ring.
     function wheelRadius() {
       const { w, h } = dimsRef.current;
-      // Wheel = min(78vh, 78vw), capped at 820. Half is the radius.
       return Math.min(820, Math.min(w, h) * 0.78) / 2;
+    }
+    function colorRingOuter() {
+      // SVG color ring outer = 0.42 of 720 viewBox; container half = 360.
+      // 302.4 / 360 = 0.84. Sparks should hug THIS, not the container edge.
+      return wheelRadius() * 0.84;
     }
     function maxReach() {
       const { w, h } = dimsRef.current;
@@ -72,16 +80,17 @@ export default function SparkRing({ colors = [], hoveredAngle = null, active = t
     const inner = Array.from({ length: INNER_COUNT }, () => spawnInner());
 
     function spawnInner() {
-      const wR = wheelRadius();
+      const colorR = colorRingOuter();
       const angle = Math.random() * Math.PI * 2;
-      // Spawn between wheel perimeter and ~1.6× wheel radius
-      const r = wR * (1.05 + Math.random() * 0.55);
+      // Spawn just past the color ring's outer edge, drift inward to it.
+      // No empty gap between the painted slabs and the sparks anymore.
+      const r = colorR * (1.02 + Math.random() * 0.38);
       const isStar = Math.random() < 0.30;
       return {
         kind: isStar ? 'star' : 'dot',
         angle,
         r,
-        targetR: wR * (1.0 + Math.random() * 0.05),
+        targetR: colorR * (1.0 + Math.random() * 0.02),
         speed: 0.04 + Math.random() * 0.10,
         size: isStar ? 1.4 + Math.random() * 2.6 : 0.7 + Math.random() * 1.5,
         life: Math.random(),
@@ -96,8 +105,8 @@ export default function SparkRing({ colors = [], hoveredAngle = null, active = t
     let constellation = [];
     function spawnConstellation() {
       const { w, h } = dimsRef.current;
-      const wR = wheelRadius();
-      // Avoid the wheel area — place in a viewport ring outside it.
+      const colorR = colorRingOuter();
+      // Avoid the wheel area — place outside the color ring.
       let x, y, dist;
       let attempts = 0;
       do {
@@ -106,7 +115,7 @@ export default function SparkRing({ colors = [], hoveredAngle = null, active = t
         const { cx, cy } = center();
         dist = Math.hypot(x - cx, y - cy);
         attempts++;
-      } while (dist < wR * 1.1 && attempts < 8);
+      } while (dist < colorR * 1.05 && attempts < 8);
       return {
         x, y,
         size: 0.6 + Math.random() * 1.6,
@@ -131,11 +140,13 @@ export default function SparkRing({ colors = [], hoveredAngle = null, active = t
     let nextBurstAt = performance.now() + 400;
 
     function fireBurst(originAngle = null) {
-      const wR = wheelRadius();
+      const colorR = colorRingOuter();
       const { cx, cy } = center();
       const angle = originAngle ?? Math.random() * Math.PI * 2;
-      const ox = cx + Math.cos(angle) * (wR * 1.05);
-      const oy = cy + Math.sin(angle) * (wR * 1.05);
+      // Bursts ignite right at the color ring's outer edge — visually they
+      // come OUT OF the colored slabs, not from somewhere in space outside.
+      const ox = cx + Math.cos(angle) * (colorR * 1.01);
+      const oy = cy + Math.sin(angle) * (colorR * 1.01);
       const count = 26 + Math.floor(Math.random() * 18);
       const deg = (angle * 180 / Math.PI + 90 + 360) % 360;
       const baseColor = colorAtAngle(deg);
