@@ -29,7 +29,6 @@ export const WHEEL_VOID_RADIUS = WHEEL_SIZE * 0.18;
 export default function ColorWheel({ colors = [], onSelect, exiting = false, burstSlot = null, onHoverAngle = null, onHoverColor = null, voidSlot = null }) {
   const [hoverIdx, setHoverIdx] = useState(null);
   const [hoverAngle, setHoverAngle] = useState(null);
-  const [wheelHovered, setWheelHovered] = useState(false);
 
   const reportHover = (angle) => {
     setHoverAngle(angle);
@@ -64,8 +63,6 @@ export default function ColorWheel({ colors = [], onSelect, exiting = false, bur
   return (
     <div
       className="relative"
-      onMouseEnter={() => setWheelHovered(true)}
-      onMouseLeave={() => setWheelHovered(false)}
       style={{
         width: 'min(78vh, 78vw)',
         height: 'min(78vh, 78vw)',
@@ -179,7 +176,7 @@ export default function ColorWheel({ colors = [], onSelect, exiting = false, bur
         </g>
 
         {/* Color ring */}
-        <g className={`rotate-color-ring ${wheelHovered ? 'rotate-slow' : ''}`} style={{ transformOrigin: `${cx}px ${cy}px` }}>
+        <g className="rotate-color-ring" style={{ transformOrigin: `${cx}px ${cy}px` }}>
           {sectors.map((color, i) => {
             const start = i * sectorAngle + gap / 2;
             const end = (i + 1) * sectorAngle - gap / 2;
@@ -250,7 +247,7 @@ export default function ColorWheel({ colors = [], onSelect, exiting = false, bur
 
         {/* Glyph ring (decorative; never blocks clicks on color sectors behind it) */}
         <g
-          className={`rotate-glyph-ring ${wheelHovered ? 'rotate-slow' : ''}`}
+          className="rotate-glyph-ring"
           style={{ transformOrigin: `${cx}px ${cy}px`, pointerEvents: 'none' }}
         >
           {Array.from({ length: 24 }).map((_, i) => {
