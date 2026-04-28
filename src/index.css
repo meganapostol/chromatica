@@ -83,6 +83,7 @@
   .rotate-color-ring { animation: spin-slow-cw 60s linear infinite; transform-origin: center center; }
   .rotate-glyph-ring { animation: spin-slow-ccw 90s linear infinite; transform-origin: center center; }
   .rotate-spark-ring { animation: spin-slow-cw 30s linear infinite; transform-origin: center center; }
+  .rotate-slow      { animation-duration: 240s; transition: animation-duration 0.6s ease; }
 
   @keyframes chromatic-breathe {
     0%, 100% { filter: saturate(var(--sat, 1)) hue-rotate(-2deg); }
@@ -215,4 +216,25 @@
 
   .scroll-hide::-webkit-scrollbar { display: none; }
   .scroll-hide { scrollbar-width: none; }
+
+  /* Slim cream scrollbar for chamber cards — always visible so users know
+     the panel scrolls. */
+  .chromatica-scrollbar { scrollbar-width: thin; scrollbar-color: rgba(248,240,227,0.45) rgba(248,240,227,0.06); }
+  .chromatica-scrollbar::-webkit-scrollbar { width: 8px; }
+  .chromatica-scrollbar::-webkit-scrollbar-track {
+    background: rgba(248,240,227,0.06);
+    border-radius: 9999px;
+    margin: 8px 0;
+  }
+  .chromatica-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(248,240,227,0.35);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  .chromatica-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(248,240,227,0.65);
+    background-clip: padding-box;
+    border: 2px solid transparent;
+  }
 }

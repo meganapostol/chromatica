@@ -228,7 +228,7 @@ export default function Chamber({ color, index, total, onBack, musicMode, allCol
         >
           <div
             ref={containerRef}
-            className="relative h-full overflow-y-auto scroll-hide"
+            className="relative h-full overflow-y-auto chromatica-scrollbar"
             style={{
               padding: '64px 48px 48px 48px',
               background: `linear-gradient(135deg, ${mixWithBg(color.hex, 0.22)} 0%, ${mixWithBg(color.hex, 0.08)} 100%)`,
