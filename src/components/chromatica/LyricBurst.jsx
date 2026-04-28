@@ -4,8 +4,9 @@ import React, { useEffect, useState, useRef } from 'react';
 //
 // CHORUS-ONLY video montage. While a chorus window is active, ONE of the
 // three chorus videos plays (muted, looping) clipped inside the central
-// void circle. Each new chorus advances to the next video in rotation, so
-// across the three choruses you see all three.
+// void circle. Each new chorus picks a random video — videos vary in
+// length, so randomising avoids a predictable "this one always plays
+// here" feel.
 //
 // Outside choruses the void shows the VoidBlobs instead.
 //
@@ -29,7 +30,17 @@ export default function LyricBurst({ getCurrentTime, voidRadius, size = 720 }) {
   const [active, setActive] = useState(false);
   const [videoIndex, setVideoIndex] = useState(0);
   const manualEndTimerRef = useRef(null);
-  const rotationRef = useRef(0); // advances each time a chorus starts
+  const lastIndexRef = useRef(-1); // remember last pick to avoid repeats
+
+  const pickRandomVideo = () => {
+    if (CHORUS_VIDEOS.length <= 1) return 0;
+    let next;
+    do {
+      next = Math.floor(Math.random() * CHORUS_VIDEOS.length);
+    } while (next === lastIndexRef.current);
+    lastIndexRef.current = next;
+    return next;
+  };
 
   // Poll the YT player time. Active iff currentTime is inside any chorus window.
   useEffect(() => {
@@ -46,9 +57,8 @@ export default function LyricBurst({ getCurrentTime, voidRadius, size = 720 }) {
       const inChorus = CHORUSES.some((c) => t >= c.start && t <= c.end);
       setActive((wasActive) => {
         if (inChorus && !wasActive) {
-          // Advance to next video on the rotation when a new chorus starts.
-          setVideoIndex(rotationRef.current % CHORUS_VIDEOS.length);
-          rotationRef.current += 1;
+          // Pick a random (non-repeating) video each time a chorus starts.
+          setVideoIndex(pickRandomVideo());
         }
         return inChorus;
       });
@@ -59,8 +69,7 @@ export default function LyricBurst({ getCurrentTime, voidRadius, size = 720 }) {
     const onKey = (e) => {
       if (e.key === 'b' || e.key === 'B') {
         manualHold = true;
-        setVideoIndex(rotationRef.current % CHORUS_VIDEOS.length);
-        rotationRef.current += 1;
+        setVideoIndex(pickRandomVideo());
         setActive(true);
         clearTimeout(manualEndTimerRef.current);
         manualEndTimerRef.current = setTimeout(() => {
