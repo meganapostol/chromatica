@@ -31,9 +31,12 @@ export default function Chamber({ color, index, total, onBack, onPrev, onNext, m
     if (containerRef.current) containerRef.current.scrollTop = 0;
   }, [color.id]);
 
-  // Path 2: timer-driven (with music)
+  // Path 2: timer-driven (with music). Stops as soon as the user scrolls,
+  // so scroll becomes the sole driver from then on (and scrolling back up
+  // actually un-greyscales the photo).
   useEffect(() => {
     if (!musicMode) return;
+    if (scrolled) return;
     const HOLD_MS = 4000;
     const FADE_MS = 26000;
     let start = null;
@@ -55,7 +58,7 @@ export default function Chamber({ color, index, total, onBack, onPrev, onNext, m
     };
     raf = requestAnimationFrame(step);
     return () => cancelAnimationFrame(raf);
-  }, [color.id, musicMode]);
+  }, [color.id, musicMode, scrolled]);
 
   // Path 1: scroll-driven (silence). Active in both modes for independent reading.
   // We accelerate the mapping so the user reaches the "how we're losing her"
@@ -72,13 +75,11 @@ export default function Chamber({ color, index, total, onBack, onPrev, onNext, m
       // Reach full reveal at ~35% of available scroll, then hold.
       const p = Math.min(1, raw / 0.35);
 
-      if (!musicMode) {
-        setSaturation(1 - p);
-        setLostOpacity(p);
-      } else {
-        setSaturation((s) => Math.min(s, 1 - p));
-        setLostOpacity((o) => Math.max(o, p));
-      }
+      // Scroll position is the source of truth for sat/lostOpacity once the
+      // user starts scrolling — in BOTH modes. Otherwise (with music) the
+      // timer drives values to 1 and scrolling back up can't undo it.
+      setSaturation(1 - p);
+      setLostOpacity(p);
     };
     el.addEventListener('scroll', onScroll, { passive: true });
     return () => el.removeEventListener('scroll', onScroll);
@@ -212,7 +213,7 @@ export default function Chamber({ color, index, total, onBack, onPrev, onNext, m
               aria-label={showUp ? 'scroll back up' : 'scroll down'}
               className="absolute flex flex-col items-center gap-1.5"
               style={{
-                zIndex: 18,
+                zIndex: 22,
                 bottom: 22,
                 right: 0,
                 width: '50%',
