@@ -7,7 +7,6 @@ import MusicPlayer from '@/components/chromatica/MusicPlayer';
 import Credits from '@/components/chromatica/Credits';
 import LyricBurst from '@/components/chromatica/LyricBurst';
 import HeroBackdrop from '@/components/chromatica/HeroBackdrop';
-import InteractiveDots from '@/components/chromatica/InteractiveDots';
 import VoidBlobs from '@/components/chromatica/VoidBlobs';
 import GuideAgent from '@/components/chromatica/GuideAgent';
 
@@ -82,10 +81,6 @@ export default function Chromatica() {
     <div className="relative min-h-screen w-screen chromatica-vignette overflow-hidden">
       {/* AMBIENT HERO — drifting aurora (or video, if HERO_VIDEO_SRC is set) */}
       <HeroBackdrop videoSrc={HERO_VIDEO_SRC} />
-
-      {/* INTERACTIVE DOT GRID — Chromatica-palette dots that repel from the
-          cursor. Field-level chromatic context across the viewport. */}
-      <InteractiveDots active={!selected} />
 
       {/* WHEEL — always mounted, faded by CSS when a chamber is open.
           We deliberately do NOT use AnimatePresence to swap wheel↔chamber:
