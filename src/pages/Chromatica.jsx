@@ -14,6 +14,7 @@ import GuideAgent from '@/components/chromatica/GuideAgent';
 import AudioWaveBars from '@/components/chromatica/AudioWaveBars';
 import SoundwaveRing from '@/components/chromatica/SoundwaveRing';
 import RainbowFinale from '@/components/chromatica/RainbowFinale';
+import ProgressDashboard from '@/components/chromatica/ProgressDashboard';
 import { setTotalColors } from '@/lib/chromatica-achievement';
 
 // Drop a video at chromatica/public/hero.mp4 and uncomment the videoSrc below
@@ -24,6 +25,7 @@ export default function Chromatica() {
   const [selectedId, setSelectedId] = useState(null);
   const [musicMode, setMusicMode] = useState(false); // default IN SILENCE — user opts into music
   const [creditsOpen, setCreditsOpen] = useState(false);
+  const [progressOpen, setProgressOpen] = useState(false);
   const [hoveredColor, setHoveredColor] = useState(null);
 
   const playerRef = useRef(null);
@@ -93,6 +95,8 @@ export default function Chromatica() {
   const enableMusic = useCallback(() => setMusicMode(true), []);
   const disableMusic = useCallback(() => setMusicMode(false), []);
   const openCredits = useCallback(() => setCreditsOpen(true), []);
+  const openProgress = useCallback(() => setProgressOpen(true), []);
+  const handleCloseProgress = useCallback(() => setProgressOpen(false), []);
   const getYTTime = useCallback(
     () => playerRef.current?.getCurrentTime?.() || 0,
     []
@@ -192,6 +196,16 @@ export default function Chromatica() {
                 in silence
               </ToggleBtn>
             </div>
+            <button
+              type="button"
+              onClick={openProgress}
+              className="font-mono-c uppercase tracking-mono"
+              style={{ fontSize: 11, color: 'rgba(248,240,227,0.7)' }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(248,240,227,1)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(248,240,227,0.7)')}
+            >
+              progress
+            </button>
             <button
               type="button"
               onClick={openCredits}
@@ -295,6 +309,19 @@ export default function Chromatica() {
         style={{ pointerEvents: creditsOpen ? 'auto' : 'none' }}
       >
         {creditsOpen && <Credits onClose={handleCloseCredits} />}
+      </div>
+
+      <div
+        className="fixed inset-0 z-[80]"
+        style={{ pointerEvents: progressOpen ? 'auto' : 'none' }}
+      >
+        {progressOpen && (
+          <ProgressDashboard
+            colors={colors}
+            onClose={handleCloseProgress}
+            onSelect={handleSelect}
+          />
+        )}
       </div>
 
       {/* PERSISTENT MUSIC PLAYER */}

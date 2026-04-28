@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import ChamberImage from './ChamberImage';
 import { mixWithBg } from '@/lib/chromatica-utils';
-import { markColorLost } from '@/lib/chromatica-achievement';
+import { markColorLost, markColorVisited } from '@/lib/chromatica-achievement';
 
 const stagger = {
   name: 0.18,
@@ -30,6 +30,8 @@ export default function Chamber({ color, index, total, onBack, onPrev, onNext, m
     setLostOpacity(0);
     setScrolled(false);
     if (containerRef.current) containerRef.current.scrollTop = 0;
+    // Opening a chamber counts as a "visit" toward the dashboard.
+    markColorVisited(color.id);
   }, [color.id]);
 
   // Greyscale is now ALWAYS scroll-driven (in both silence and music modes),
