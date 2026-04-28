@@ -205,10 +205,23 @@ export default function Chromatica() {
         <GuideAgent onWheelState={!selected} />
       </div>
 
-      {/* CHAMBER — mounted only when a color is selected. Plain conditional
-          mount + CSS fade-in via the chamber's own background animation. */}
-      {selected && (
-        <div className="fixed inset-0 z-20" style={{ animation: 'chromatica-fade-in 0.4s ease-out' }}>
+      {/* CHAMBER & CREDITS slots — ALWAYS rendered as siblings of the wheel
+          wrapper, even when empty. This keeps the Chromatica root's
+          children list stable across selection changes, which prevents the
+          insertBefore crashes that happened when the chamber div mounted
+          mid-commit alongside the wheel's opacity transition. The heavy
+          Chamber/Credits components are still conditionally mounted INSIDE
+          their stable wrappers — only the wrappers themselves are
+          permanent. */}
+      <div
+        className="fixed inset-0 z-20"
+        style={{
+          opacity: selected ? 1 : 0,
+          pointerEvents: selected ? 'auto' : 'none',
+          transition: 'opacity 0.4s ease-out'
+        }}
+      >
+        {selected && (
           <Chamber
             color={selected}
             index={selectedIndex >= 0 ? selectedIndex : 0}
@@ -218,12 +231,15 @@ export default function Chromatica() {
             allColors={colors}
             onSelectCompanion={handleSelectCompanion}
           />
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* CREDITS PANEL — plain conditional render. Credits owns its own
-          opacity fade-in via CSS so we don't need AnimatePresence. */}
-      {creditsOpen && <Credits onClose={handleCloseCredits} />}
+      <div
+        className="fixed inset-0 z-[80]"
+        style={{ pointerEvents: creditsOpen ? 'auto' : 'none' }}
+      >
+        {creditsOpen && <Credits onClose={handleCloseCredits} />}
+      </div>
 
       {/* PERSISTENT MUSIC PLAYER */}
       <MusicPlayer ref={playerRef} />
