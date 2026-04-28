@@ -62,9 +62,9 @@ export default function Chamber({ color, index, total, onBack, onPrev, onNext, m
   }, [color.id, musicMode, scrolled]);
 
   // Path 1: scroll-driven (silence). Active in both modes for independent reading.
-  // We accelerate the mapping so the user reaches the "how we're losing her"
-  // card after a small amount of scrolling — they don't have to traverse the
-  // full text column.
+  // The user must reach the END of the text column before greyscale completes.
+  // Greyscale begins gently after they've read past the first 60% of the column,
+  // and reaches full at the very bottom.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -73,8 +73,9 @@ export default function Chamber({ color, index, total, onBack, onPrev, onNext, m
       const max = el.scrollHeight - el.clientHeight;
       if (max <= 0) return;
       const raw = Math.max(0, Math.min(1, el.scrollTop / max));
-      // Reach full reveal at ~25% of available scroll, then hold.
-      const p = Math.min(1, raw / 0.25);
+      // Stay full color until 60% scrolled, then ramp to full greyscale at 100%.
+      const START = 0.6;
+      const p = raw <= START ? 0 : Math.min(1, (raw - START) / (1 - START));
 
       // Scroll position is the source of truth for sat/lostOpacity once the
       // user starts scrolling — in BOTH modes. Otherwise (with music) the
