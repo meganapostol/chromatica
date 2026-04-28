@@ -14,10 +14,6 @@ const stagger = {
   back: 0.88
 };
 
-// CSS-driven fade-up replacing the framer-motion variants.
-// Removing framer-motion from this file ends the insertBefore crashes
-// that fired when chamber/credits transitions collided with React's
-// reconciler.
 const fadeUp = (delay) => ({
   opacity: 0,
   animation: `chromatica-section-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) ${delay}s forwards`
@@ -60,7 +56,7 @@ export default function Chamber({ color, index, total, onBack, musicMode, allCol
     return () => cancelAnimationFrame(raf);
   }, [color.id, musicMode]);
 
-  // Path 1: scroll-driven (in silence). Also active in music mode for independent reading.
+  // Path 1: scroll-driven (silence). Active in both modes for independent reading.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -76,12 +72,10 @@ export default function Chamber({ color, index, total, onBack, musicMode, allCol
         setSaturation((s) => Math.min(s, 1 - p));
         setLostOpacity((o) => Math.max(o, p));
       }
-
-      if (el.scrollTop < -40) onBack();
     };
     el.addEventListener('scroll', onScroll, { passive: true });
     return () => el.removeEventListener('scroll', onScroll);
-  }, [musicMode, onBack]);
+  }, [musicMode]);
 
   // Escape key
   useEffect(() => {
@@ -91,45 +85,99 @@ export default function Chamber({ color, index, total, onBack, musicMode, allCol
   }, [onBack]);
 
   const tint = mixWithBg(color.hex, 0.06);
+  const glassBorder = mixWithBg(color.hex, 0.4);
+
+  const handleBackdropClick = (e) => {
+    if (e.target === e.currentTarget) onBack();
+  };
 
   return (
     <div
-      ref={containerRef}
-      className="fixed inset-0 overflow-y-auto overflow-x-hidden scroll-hide"
-      style={{ backgroundColor: tint }}
+      onClick={handleBackdropClick}
+      className="fixed inset-0 flex items-center justify-center p-6 md:p-10"
+      style={{
+        backgroundColor: 'rgba(5, 5, 8, 0.55)',
+        backdropFilter: 'blur(6px)',
+        WebkitBackdropFilter: 'blur(6px)',
+        animation: 'chromatica-fade-in 0.3s ease-out'
+      }}
     >
-      {/* expanding stained gradient from center */}
       <div
-        aria-hidden
-        className="fixed inset-0 pointer-events-none"
+        role="dialog"
+        aria-modal="true"
+        className="relative grid grid-cols-1 md:grid-cols-2 overflow-hidden"
         style={{
-          background: `radial-gradient(ellipse at center, ${mixWithBg(color.hex, 0.18)} 0%, ${tint} 55%, #050508 100%)`,
-          opacity: 0,
-          transform: 'scale(0.2)',
-          animation: 'chromatica-chamber-stain 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards'
+          width: '100%',
+          maxWidth: 1180,
+          height: '88vh',
+          maxHeight: 880,
+          borderRadius: 18,
+          background: `linear-gradient(135deg, ${mixWithBg(color.hex, 0.18)} 0%, ${tint} 100%)`,
+          backgroundColor: 'rgba(10, 8, 14, 0.55)',
+          backdropFilter: 'blur(22px) saturate(1.2)',
+          WebkitBackdropFilter: 'blur(22px) saturate(1.2)',
+          border: `1px solid ${glassBorder}55`,
+          boxShadow: `0 32px 96px rgba(0,0,0,0.55), 0 0 60px ${color.hex}22`,
+          animation: 'chromatica-card-in 0.5s cubic-bezier(0.22, 1, 0.36, 1)'
         }}
-      />
-
-      {/* meta top right */}
-      <div
-        className="fixed top-6 right-6 font-mono-c text-[11px] tracking-mono uppercase"
-        style={{ color: 'rgba(250,250,250,0.5)', zIndex: 30, ...fadeUp(stagger.back) }}
       >
-        chromatica · {String(index + 1).padStart(2, '0')}/30
-      </div>
+        {/* CLOSE BUTTON */}
+        <button
+          type="button"
+          onClick={onBack}
+          aria-label="close chamber"
+          className="absolute font-mono-c uppercase tracking-mono"
+          style={{
+            top: 18,
+            right: 18,
+            zIndex: 5,
+            fontSize: 11,
+            color: 'rgba(248,240,227,0.85)',
+            backgroundColor: 'rgba(15, 12, 18, 0.65)',
+            border: '1px solid rgba(248, 240, 227, 0.22)',
+            borderRadius: 9999,
+            padding: '7px 14px',
+            cursor: 'pointer',
+            transition: 'background-color 0.2s, color 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(15, 12, 18, 0.9)';
+            e.currentTarget.style.color = '#FAFAFA';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'rgba(15, 12, 18, 0.65)';
+            e.currentTarget.style.color = 'rgba(248,240,227,0.85)';
+          }}
+        >
+          × close
+        </button>
 
-      <div className="relative grid grid-cols-2 min-h-screen" style={{ zIndex: 10 }}>
+        {/* META top-right under close button */}
+        <div
+          className="absolute font-mono-c uppercase tracking-mono"
+          style={{
+            top: 22,
+            right: 110,
+            zIndex: 4,
+            fontSize: 10,
+            color: 'rgba(250,250,250,0.45)',
+            ...fadeUp(stagger.back)
+          }}
+        >
+          chromatica · {String(index + 1).padStart(2, '0')}/30
+        </div>
+
         {/* LEFT: image */}
         <div
-          className="relative h-screen sticky top-0"
+          className="relative h-full hidden md:block"
           style={fadeUp(stagger.image)}
         >
           <ChamberImage color={color} saturation={saturation} />
-          <div className="absolute bottom-8 left-8 right-8">
+          <div className="absolute bottom-6 left-6 right-6">
             <div
               className="font-display italic text-[14px] leading-relaxed"
               style={{
-                color: 'rgba(250,250,250,0.6)',
+                color: 'rgba(250,250,250,0.7)',
                 opacity: lostOpacity,
                 transition: 'opacity 0.4s ease-out'
               }}
@@ -139,54 +187,47 @@ export default function Chamber({ color, index, total, onBack, musicMode, allCol
           </div>
         </div>
 
-        {/* RIGHT: text column */}
-        <div className="px-16 py-20 flex flex-col gap-10">
-          <button
-            type="button"
-            onClick={onBack}
-            className="self-start font-mono-c text-[11px] tracking-mono-tight uppercase"
-            style={{ color: '#F8F0E3', ...fadeUp(stagger.back) }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = color.hex)}
-            onMouseLeave={(e) => (e.currentTarget.style.color = '#F8F0E3')}
-          >
-            ← back to the wheel
-          </button>
-
+        {/* RIGHT: scrollable text column */}
+        <div
+          ref={containerRef}
+          className="relative overflow-y-auto scroll-hide"
+          style={{ padding: '64px 48px 48px 48px' }}
+        >
           <div>
             <h1
               className="font-display tracking-display-tight"
-              style={{ fontWeight: 600, fontSize: 80, lineHeight: 0.95, color: '#F8F0E3', ...fadeUp(stagger.name) }}
+              style={{ fontWeight: 600, fontSize: 64, lineHeight: 0.95, color: '#F8F0E3', ...fadeUp(stagger.name) }}
             >
               {color.name}
             </h1>
             <div
               className="font-mono-c uppercase mt-3"
-              style={{ fontSize: 16, letterSpacing: '0.05em', color: 'rgba(250,250,250,0.6)', fontWeight: 500, ...fadeUp(stagger.hex) }}
+              style={{ fontSize: 14, letterSpacing: '0.05em', color: 'rgba(250,250,250,0.6)', fontWeight: 500, ...fadeUp(stagger.hex) }}
             >
               {color.hex}
             </div>
           </div>
 
-          <div style={fadeUp(stagger.etymology)}>
-            <div className="hairline mb-8" style={{ backgroundColor: mixWithBg(color.hex, 0.4) + '26' }} />
-            <p className="font-body" style={{ fontSize: 18, lineHeight: 1.6, color: '#F8F0E3' }}>
+          <div className="mt-8" style={fadeUp(stagger.etymology)}>
+            <div className="hairline mb-6" style={{ backgroundColor: mixWithBg(color.hex, 0.4) + '26' }} />
+            <p className="font-body" style={{ fontSize: 17, lineHeight: 1.6, color: '#F8F0E3' }}>
               {color.etymology.narrative}
             </p>
           </div>
 
           <p
-            className="font-display italic"
-            style={{ fontSize: 22, lineHeight: 1.4, color: '#F8F0E3', margin: '8px 0', ...fadeUp(stagger.voice) }}
+            className="font-display italic mt-6"
+            style={{ fontSize: 22, lineHeight: 1.4, color: '#F8F0E3', ...fadeUp(stagger.voice) }}
           >
             {color.voice}
           </p>
 
-          <div style={fadeUp(stagger.nature)}>
-            <div className="hairline mb-8" style={{ backgroundColor: mixWithBg(color.hex, 0.4) + '26' }} />
+          <div className="mt-8" style={fadeUp(stagger.nature)}>
+            <div className="hairline mb-6" style={{ backgroundColor: mixWithBg(color.hex, 0.4) + '26' }} />
             <SectionLabel>where she lives in nature</SectionLabel>
             <ul className="space-y-2 mt-4">
               {color.nature.map((n, i) => (
-                <li key={i} className="font-body flex gap-3" style={{ fontSize: 18, lineHeight: 1.6, color: '#F8F0E3' }}>
+                <li key={i} className="font-body flex gap-3" style={{ fontSize: 16, lineHeight: 1.6, color: '#F8F0E3' }}>
                   <span style={{ color: 'rgba(248,240,227,0.4)' }}>·</span>
                   <span>{n}</span>
                 </li>
@@ -194,12 +235,12 @@ export default function Chamber({ color, index, total, onBack, musicMode, allCol
             </ul>
           </div>
 
-          <div style={fadeUp(stagger.history)}>
-            <div className="hairline mb-8" style={{ backgroundColor: mixWithBg(color.hex, 0.4) + '26' }} />
+          <div className="mt-8" style={fadeUp(stagger.history)}>
+            <div className="hairline mb-6" style={{ backgroundColor: mixWithBg(color.hex, 0.4) + '26' }} />
             <SectionLabel>where she lives in history</SectionLabel>
             <ul className="space-y-2 mt-4">
               {color.history.map((n, i) => (
-                <li key={i} className="font-body flex gap-3" style={{ fontSize: 18, lineHeight: 1.6, color: '#F8F0E3' }}>
+                <li key={i} className="font-body flex gap-3" style={{ fontSize: 16, lineHeight: 1.6, color: '#F8F0E3' }}>
                   <span style={{ color: 'rgba(248,240,227,0.4)' }}>·</span>
                   <span>{n}</span>
                 </li>
@@ -207,10 +248,10 @@ export default function Chamber({ color, index, total, onBack, musicMode, allCol
             </ul>
           </div>
 
-          <div className="pb-24" style={fadeUp(stagger.companions)}>
-            <div className="hairline mb-8" style={{ backgroundColor: mixWithBg(color.hex, 0.4) + '26' }} />
+          <div className="mt-8 pb-4" style={fadeUp(stagger.companions)}>
+            <div className="hairline mb-6" style={{ backgroundColor: mixWithBg(color.hex, 0.4) + '26' }} />
             <SectionLabel>her companions</SectionLabel>
-            <div className="flex gap-4 mt-5">
+            <div className="flex gap-3 mt-4 flex-wrap">
               {color.companions.map((hex, i) => {
                 const match = allColors.find((c) => c.hex.toLowerCase() === hex.toLowerCase());
                 const interactive = !!match;
@@ -222,8 +263,8 @@ export default function Chamber({ color, index, total, onBack, musicMode, allCol
                     disabled={!interactive}
                     className="rounded-md transition-transform"
                     style={{
-                      width: 60,
-                      height: 60,
+                      width: 52,
+                      height: 52,
                       backgroundColor: hex,
                       cursor: interactive ? 'pointer' : 'default',
                       boxShadow: `0 0 24px ${hex}33`,

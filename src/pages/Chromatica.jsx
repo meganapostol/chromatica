@@ -8,6 +8,7 @@ import Credits from '@/components/chromatica/Credits';
 import LyricBurst from '@/components/chromatica/LyricBurst';
 import HeroBackdrop from '@/components/chromatica/HeroBackdrop';
 import VoidBlobs from '@/components/chromatica/VoidBlobs';
+import VoidPreview from '@/components/chromatica/VoidPreview';
 import GuideAgent from '@/components/chromatica/GuideAgent';
 
 // Drop a video at chromatica/public/hero.mp4 and uncomment the videoSrc below
@@ -18,6 +19,7 @@ export default function Chromatica() {
   const [selectedId, setSelectedId] = useState(null);
   const [musicMode, setMusicMode] = useState(false); // default IN SILENCE — user opts into music
   const [creditsOpen, setCreditsOpen] = useState(false);
+  const [hoveredColor, setHoveredColor] = useState(null);
 
   const playerRef = useRef(null);
 
@@ -60,6 +62,7 @@ export default function Chromatica() {
   // Stable callbacks so child effects don't re-fire on every parent render.
   // (Credits.jsx and ColorWheel both depend on these.)
   const handleSelect = useCallback((id) => setSelectedId(id), []);
+  const handleHoverColor = useCallback((color) => setHoveredColor(color), []);
   const handleBack = useCallback(() => setSelectedId(null), []);
   const handleCloseCredits = useCallback(() => setCreditsOpen(false), []);
   const handleSelectCompanion = useCallback((id) => setSelectedId(id), []);
@@ -90,9 +93,7 @@ export default function Chromatica() {
       <div
         className="fixed inset-0 z-10"
         style={{
-          opacity: selected ? 0 : 1,
-          pointerEvents: selected ? 'none' : 'auto',
-          transition: 'opacity 0.4s ease-out'
+          pointerEvents: selected ? 'none' : 'auto'
         }}
       >
         {/* TOP NAV — a real header bar with its own translucent background,
@@ -188,7 +189,22 @@ export default function Chromatica() {
             <ColorWheel
               colors={colors}
               onSelect={handleSelect}
-              voidSlot={<VoidBlobs />}
+              onHoverColor={handleHoverColor}
+              voidSlot={
+                <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                  <div
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      opacity: hoveredColor ? 0.15 : 1,
+                      transition: 'opacity 0.35s ease-out'
+                    }}
+                  >
+                    <VoidBlobs />
+                  </div>
+                  <VoidPreview color={hoveredColor} />
+                </div>
+              }
               burstSlot={
                 <LyricBurst
                   images={colors.map((c) => c.image).filter(Boolean)}
@@ -215,11 +231,7 @@ export default function Chromatica() {
           permanent. */}
       <div
         className="fixed inset-0 z-20"
-        style={{
-          opacity: selected ? 1 : 0,
-          pointerEvents: selected ? 'auto' : 'none',
-          transition: 'opacity 0.4s ease-out'
-        }}
+        style={{ pointerEvents: selected ? 'auto' : 'none' }}
       >
         {selected && (
           <Chamber

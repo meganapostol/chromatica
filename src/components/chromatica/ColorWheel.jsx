@@ -26,7 +26,7 @@ function sectorPath(cx, cy, rOuter, rInner, startDeg, endDeg) {
 export const WHEEL_SIZE = 720;
 export const WHEEL_VOID_RADIUS = WHEEL_SIZE * 0.18;
 
-export default function ColorWheel({ colors = [], onSelect, exiting = false, burstSlot = null, onHoverAngle = null, voidSlot = null }) {
+export default function ColorWheel({ colors = [], onSelect, exiting = false, burstSlot = null, onHoverAngle = null, onHoverColor = null, voidSlot = null }) {
   const [hoverIdx, setHoverIdx] = useState(null);
   const [hoverAngle, setHoverAngle] = useState(null);
 
@@ -226,8 +226,16 @@ export default function ColorWheel({ colors = [], onSelect, exiting = false, bur
                     transition: 'filter 0.3s ease, d 0.3s ease',
                     cursor: 'pointer'
                   }}
-                  onMouseEnter={() => { setHoverIdx(i); reportHover(start + sectorAngle / 2); }}
-                  onMouseLeave={() => { setHoverIdx(null); reportHover(null); }}
+                  onMouseEnter={() => {
+                    setHoverIdx(i);
+                    reportHover(start + sectorAngle / 2);
+                    onHoverColor?.(color);
+                  }}
+                  onMouseLeave={() => {
+                    setHoverIdx(null);
+                    reportHover(null);
+                    onHoverColor?.(null);
+                  }}
                   onClick={() => onSelect(color.id)}
                 >
                   <title>{color.name.toLowerCase()}</title>
