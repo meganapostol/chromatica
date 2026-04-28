@@ -7,9 +7,9 @@ import React, { useEffect, useRef, useState } from 'react';
 // the next. No watchdog — those were the glitches (firing onStalled
 // during normal buffering and aborting playback before it could start).
 const CHORUS_VIDEOS = [
-  'https://github.com/meganapostol/chromaticavidcontent/raw/refs/heads/main/Miyazaki%20(1).mp4',
-  'https://github.com/meganapostol/chromaticavidcontent/raw/refs/heads/main/Untitled%20design%20(3).mp4',
-  'https://github.com/meganapostol/chromaticavidcontent/raw/refs/heads/main/Miyazaki%203.mp4'
+  'https://base44.app/api/apps/69eef675347dd19b7960d413/files/mp/public/69eef675347dd19b7960d413/7d410673a_chromatica-video-1.mp4',
+  'https://base44.app/api/apps/69eef675347dd19b7960d413/files/mp/public/69eef675347dd19b7960d413/54ece0da7_chromatica-video-2.mp4',
+  'https://base44.app/api/apps/69eef675347dd19b7960d413/files/mp/public/69eef675347dd19b7960d413/c7aa2accd_chromatica-video-3.mp4'
 ];
 
 export default function LyricBurst({ voidRadius }) {
