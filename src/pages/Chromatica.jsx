@@ -11,6 +11,7 @@ import VoidBlobs from '@/components/chromatica/VoidBlobs';
 import VoidPreview from '@/components/chromatica/VoidPreview';
 import HoverBackdrop from '@/components/chromatica/HoverBackdrop';
 import GuideAgent from '@/components/chromatica/GuideAgent';
+import AudioWaveBars from '@/components/chromatica/AudioWaveBars';
 
 // Drop a video at chromatica/public/hero.mp4 and uncomment the videoSrc below
 // to swap the aurora gradient for cinematic footage.
@@ -250,6 +251,9 @@ export default function Chromatica() {
 
       {/* PERSISTENT MUSIC PLAYER */}
       <MusicPlayer ref={playerRef} />
+
+      {/* AUDIO-WAVE BARS — only when "with music" is active */}
+      <AudioWaveBars active={musicMode} />
     </div>
   );
 }
