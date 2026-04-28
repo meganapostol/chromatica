@@ -9,6 +9,11 @@ import LyricBurst from '@/components/chromatica/LyricBurst';
 import HeroBackdrop from '@/components/chromatica/HeroBackdrop';
 import VoidBlobs from '@/components/chromatica/VoidBlobs';
 import GuideAgent from '@/components/chromatica/GuideAgent';
+import { SVGFollower } from '@/components/ui/svg-follower';
+
+// Cursor trail palette — sampled from the Chromatica wheel so the follower
+// reads as native to the site.
+const FOLLOWER_COLORS = ['#E34234', '#F2A900', '#2E8B57', '#002FA7', '#8E4585', '#F8F0E3'];
 
 // Drop a video at chromatica/public/hero.mp4 and uncomment the videoSrc below
 // to swap the aurora gradient for cinematic footage.
@@ -81,6 +86,11 @@ export default function Chromatica() {
     <div className="relative min-h-screen w-screen chromatica-vignette overflow-hidden">
       {/* AMBIENT HERO — drifting aurora (or video, if HERO_VIDEO_SRC is set) */}
       <HeroBackdrop videoSrc={HERO_VIDEO_SRC} />
+
+      {/* CHROMATIC CURSOR TRAIL — fullscreen overlay, pointer-events: none,
+          listens to window mousemove so it never blocks clicks on the wheel,
+          nav, or modals. */}
+      <SVGFollower fullscreen colors={FOLLOWER_COLORS} />
 
       {/* WHEEL — always mounted, faded by CSS when a chamber is open.
           We deliberately do NOT use AnimatePresence to swap wheel↔chamber:
