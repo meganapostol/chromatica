@@ -3,15 +3,14 @@ import ChamberImage from './ChamberImage';
 import { mixWithBg } from '@/lib/chromatica-utils';
 
 const stagger = {
-  image: 0.20,
-  name: 0.32,
-  hex: 0.40,
-  etymology: 0.48,
-  voice: 0.56,
-  nature: 0.64,
-  history: 0.72,
-  companions: 0.80,
-  back: 0.88
+  name: 0.18,
+  hex: 0.26,
+  etymology: 0.34,
+  voice: 0.42,
+  nature: 0.50,
+  history: 0.58,
+  companions: 0.66,
+  back: 0.74
 };
 
 const fadeUp = (delay) => ({
@@ -84,12 +83,17 @@ export default function Chamber({ color, index, total, onBack, musicMode, allCol
     return () => window.removeEventListener('keydown', onKey);
   }, [onBack]);
 
-  const tint = mixWithBg(color.hex, 0.06);
   const glassBorder = mixWithBg(color.hex, 0.4);
 
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) onBack();
   };
+
+  // As lostOpacity rises, the text card fades and scales up (zooming "into"
+  // the photo behind it), and the inner "how we're losing her" card fades in.
+  const textCardOpacity = Math.max(0, 1 - lostOpacity * 1.25);
+  const textCardScale = 1 + lostOpacity * 0.08;
+  const lostCardOpacity = Math.max(0, (lostOpacity - 0.55) / 0.45);
 
   return (
     <div
@@ -105,22 +109,23 @@ export default function Chamber({ color, index, total, onBack, musicMode, allCol
       <div
         role="dialog"
         aria-modal="true"
-        className="relative grid grid-cols-1 md:grid-cols-2 overflow-hidden"
+        className="relative overflow-hidden"
         style={{
           width: '100%',
           maxWidth: 1180,
           height: '88vh',
           maxHeight: 880,
           borderRadius: 18,
-          background: `linear-gradient(135deg, ${mixWithBg(color.hex, 0.18)} 0%, ${tint} 100%)`,
-          backgroundColor: 'rgba(10, 8, 14, 0.55)',
-          backdropFilter: 'blur(22px) saturate(1.2)',
-          WebkitBackdropFilter: 'blur(22px) saturate(1.2)',
           border: `1px solid ${glassBorder}55`,
           boxShadow: `0 32px 96px rgba(0,0,0,0.55), 0 0 60px ${color.hex}22`,
           animation: 'chromatica-card-in 0.5s cubic-bezier(0.22, 1, 0.36, 1)'
         }}
       >
+        {/* FULL-BLEED PHOTO: lives behind everything; desaturates with scroll */}
+        <div className="absolute inset-0">
+          <ChamberImage color={color} saturation={saturation} />
+        </div>
+
         {/* CLOSE BUTTON */}
         <button
           type="button"
@@ -130,7 +135,7 @@ export default function Chamber({ color, index, total, onBack, musicMode, allCol
           style={{
             top: 18,
             right: 18,
-            zIndex: 5,
+            zIndex: 20,
             fontSize: 11,
             color: 'rgba(248,240,227,0.85)',
             backgroundColor: 'rgba(15, 12, 18, 0.65)',
@@ -152,131 +157,170 @@ export default function Chamber({ color, index, total, onBack, musicMode, allCol
           × close
         </button>
 
-        {/* META top-right under close button */}
+        {/* META indicator */}
         <div
           className="absolute font-mono-c uppercase tracking-mono"
           style={{
             top: 22,
             right: 110,
-            zIndex: 4,
+            zIndex: 19,
             fontSize: 10,
-            color: 'rgba(250,250,250,0.45)',
+            color: 'rgba(250,250,250,0.7)',
             ...fadeUp(stagger.back)
           }}
         >
           chromatica · {String(index + 1).padStart(2, '0')}/30
         </div>
 
-        {/* LEFT: image */}
+        {/* TEXT GLASS CARD — overlays photo on the right, fades & scales out as you scroll */}
         <div
-          className="relative h-full hidden md:block"
-          style={fadeUp(stagger.image)}
+          className="absolute inset-y-0 right-0 w-full md:w-1/2"
+          style={{
+            zIndex: 10,
+            opacity: textCardOpacity,
+            transform: `scale(${textCardScale})`,
+            transformOrigin: 'center right',
+            transition: 'opacity 0.3s ease-out, transform 0.4s ease-out',
+            pointerEvents: textCardOpacity < 0.05 ? 'none' : 'auto'
+          }}
         >
-          <ChamberImage color={color} saturation={saturation} />
-          <div className="absolute bottom-6 left-6 right-6">
-            <div
-              className="font-display italic text-[14px] leading-relaxed"
-              style={{
-                color: 'rgba(250,250,250,0.7)',
-                opacity: lostOpacity,
-                transition: 'opacity 0.4s ease-out'
-              }}
+          <div
+            ref={containerRef}
+            className="relative h-full overflow-y-auto scroll-hide"
+            style={{
+              padding: '64px 48px 48px 48px',
+              background: `linear-gradient(135deg, ${mixWithBg(color.hex, 0.22)} 0%, ${mixWithBg(color.hex, 0.08)} 100%)`,
+              backgroundColor: 'rgba(10, 8, 14, 0.72)',
+              backdropFilter: 'blur(22px) saturate(1.2)',
+              WebkitBackdropFilter: 'blur(22px) saturate(1.2)',
+              borderLeft: `1px solid ${glassBorder}33`
+            }}
+          >
+            <div>
+              <h1
+                className="font-display tracking-display-tight"
+                style={{ fontWeight: 600, fontSize: 64, lineHeight: 0.95, color: '#F8F0E3', ...fadeUp(stagger.name) }}
+              >
+                {color.name}
+              </h1>
+              <div
+                className="font-mono-c uppercase mt-3"
+                style={{ fontSize: 14, letterSpacing: '0.05em', color: 'rgba(250,250,250,0.6)', fontWeight: 500, ...fadeUp(stagger.hex) }}
+              >
+                {color.hex}
+              </div>
+            </div>
+
+            <div className="mt-8" style={fadeUp(stagger.etymology)}>
+              <div className="hairline mb-6" style={{ backgroundColor: mixWithBg(color.hex, 0.4) + '26' }} />
+              <p className="font-body" style={{ fontSize: 17, lineHeight: 1.6, color: '#F8F0E3' }}>
+                {color.etymology.narrative}
+              </p>
+            </div>
+
+            <p
+              className="font-display italic mt-6"
+              style={{ fontSize: 22, lineHeight: 1.4, color: '#F8F0E3', ...fadeUp(stagger.voice) }}
             >
-              where she's being lost: {color.lost}
+              {color.voice}
+            </p>
+
+            <div className="mt-8" style={fadeUp(stagger.nature)}>
+              <div className="hairline mb-6" style={{ backgroundColor: mixWithBg(color.hex, 0.4) + '26' }} />
+              <SectionLabel>where she lives in nature</SectionLabel>
+              <ul className="space-y-2 mt-4">
+                {color.nature.map((n, i) => (
+                  <li key={i} className="font-body flex gap-3" style={{ fontSize: 16, lineHeight: 1.6, color: '#F8F0E3' }}>
+                    <span style={{ color: 'rgba(248,240,227,0.4)' }}>·</span>
+                    <span>{n}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="mt-8" style={fadeUp(stagger.history)}>
+              <div className="hairline mb-6" style={{ backgroundColor: mixWithBg(color.hex, 0.4) + '26' }} />
+              <SectionLabel>where she lives in history</SectionLabel>
+              <ul className="space-y-2 mt-4">
+                {color.history.map((n, i) => (
+                  <li key={i} className="font-body flex gap-3" style={{ fontSize: 16, lineHeight: 1.6, color: '#F8F0E3' }}>
+                    <span style={{ color: 'rgba(248,240,227,0.4)' }}>·</span>
+                    <span>{n}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="mt-8 pb-4" style={fadeUp(stagger.companions)}>
+              <div className="hairline mb-6" style={{ backgroundColor: mixWithBg(color.hex, 0.4) + '26' }} />
+              <SectionLabel>her companions</SectionLabel>
+              <div className="flex gap-3 mt-4 flex-wrap">
+                {color.companions.map((hex, i) => {
+                  const match = allColors.find((c) => c.hex.toLowerCase() === hex.toLowerCase());
+                  const interactive = !!match;
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => interactive && onSelectCompanion(match.id)}
+                      disabled={!interactive}
+                      className="rounded-md transition-transform"
+                      style={{
+                        width: 52,
+                        height: 52,
+                        backgroundColor: hex,
+                        cursor: interactive ? 'pointer' : 'default',
+                        boxShadow: `0 0 24px ${hex}33`,
+                        outline: '1px solid rgba(250,250,250,0.08)'
+                      }}
+                      onMouseEnter={(e) => interactive && (e.currentTarget.style.transform = 'translateY(-2px)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
+                      title={hex}
+                    />
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* RIGHT: scrollable text column */}
+        {/* INNER "HOW WE'RE LOSING HER" CARD — fades in once the photo is greyscale */}
         <div
-          ref={containerRef}
-          className="relative overflow-y-auto scroll-hide"
-          style={{ padding: '64px 48px 48px 48px' }}
+          className="absolute inset-0 flex items-center justify-center p-10 md:p-16"
+          style={{
+            zIndex: 15,
+            opacity: lostCardOpacity,
+            transition: 'opacity 0.5s ease-out',
+            pointerEvents: lostCardOpacity < 0.5 ? 'none' : 'auto'
+          }}
         >
-          <div>
-            <h1
-              className="font-display tracking-display-tight"
-              style={{ fontWeight: 600, fontSize: 64, lineHeight: 0.95, color: '#F8F0E3', ...fadeUp(stagger.name) }}
-            >
-              {color.name}
-            </h1>
-            <div
-              className="font-mono-c uppercase mt-3"
-              style={{ fontSize: 14, letterSpacing: '0.05em', color: 'rgba(250,250,250,0.6)', fontWeight: 500, ...fadeUp(stagger.hex) }}
-            >
-              {color.hex}
-            </div>
-          </div>
-
-          <div className="mt-8" style={fadeUp(stagger.etymology)}>
-            <div className="hairline mb-6" style={{ backgroundColor: mixWithBg(color.hex, 0.4) + '26' }} />
-            <p className="font-body" style={{ fontSize: 17, lineHeight: 1.6, color: '#F8F0E3' }}>
-              {color.etymology.narrative}
-            </p>
-          </div>
-
-          <p
-            className="font-display italic mt-6"
-            style={{ fontSize: 22, lineHeight: 1.4, color: '#F8F0E3', ...fadeUp(stagger.voice) }}
+          <div
+            className="relative"
+            style={{
+              maxWidth: 560,
+              padding: '40px 44px',
+              borderRadius: 14,
+              backgroundColor: 'rgba(10, 8, 14, 0.55)',
+              backdropFilter: 'blur(18px) saturate(1.1)',
+              WebkitBackdropFilter: 'blur(18px) saturate(1.1)',
+              border: '1px solid rgba(248, 240, 227, 0.18)',
+              boxShadow: '0 24px 80px rgba(0,0,0,0.55)',
+              transform: `translateY(${(1 - lostCardOpacity) * 16}px)`,
+              transition: 'transform 0.5s ease-out'
+            }}
           >
-            {color.voice}
-          </p>
-
-          <div className="mt-8" style={fadeUp(stagger.nature)}>
-            <div className="hairline mb-6" style={{ backgroundColor: mixWithBg(color.hex, 0.4) + '26' }} />
-            <SectionLabel>where she lives in nature</SectionLabel>
-            <ul className="space-y-2 mt-4">
-              {color.nature.map((n, i) => (
-                <li key={i} className="font-body flex gap-3" style={{ fontSize: 16, lineHeight: 1.6, color: '#F8F0E3' }}>
-                  <span style={{ color: 'rgba(248,240,227,0.4)' }}>·</span>
-                  <span>{n}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="mt-8" style={fadeUp(stagger.history)}>
-            <div className="hairline mb-6" style={{ backgroundColor: mixWithBg(color.hex, 0.4) + '26' }} />
-            <SectionLabel>where she lives in history</SectionLabel>
-            <ul className="space-y-2 mt-4">
-              {color.history.map((n, i) => (
-                <li key={i} className="font-body flex gap-3" style={{ fontSize: 16, lineHeight: 1.6, color: '#F8F0E3' }}>
-                  <span style={{ color: 'rgba(248,240,227,0.4)' }}>·</span>
-                  <span>{n}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="mt-8 pb-4" style={fadeUp(stagger.companions)}>
-            <div className="hairline mb-6" style={{ backgroundColor: mixWithBg(color.hex, 0.4) + '26' }} />
-            <SectionLabel>her companions</SectionLabel>
-            <div className="flex gap-3 mt-4 flex-wrap">
-              {color.companions.map((hex, i) => {
-                const match = allColors.find((c) => c.hex.toLowerCase() === hex.toLowerCase());
-                const interactive = !!match;
-                return (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => interactive && onSelectCompanion(match.id)}
-                    disabled={!interactive}
-                    className="rounded-md transition-transform"
-                    style={{
-                      width: 52,
-                      height: 52,
-                      backgroundColor: hex,
-                      cursor: interactive ? 'pointer' : 'default',
-                      boxShadow: `0 0 24px ${hex}33`,
-                      outline: '1px solid rgba(250,250,250,0.08)'
-                    }}
-                    onMouseEnter={(e) => interactive && (e.currentTarget.style.transform = 'translateY(-2px)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
-                    title={hex}
-                  />
-                );
-              })}
+            <div
+              className="font-mono-c uppercase tracking-mono"
+              style={{ fontSize: 11, color: 'rgba(250,250,250,0.6)', marginBottom: 18 }}
+            >
+              how we're losing her
             </div>
+            <p
+              className="font-display italic"
+              style={{ fontSize: 22, lineHeight: 1.5, color: '#F8F0E3' }}
+            >
+              {color.lost}
+            </p>
           </div>
         </div>
       </div>
