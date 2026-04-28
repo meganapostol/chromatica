@@ -9,6 +9,7 @@ import LyricBurst from '@/components/chromatica/LyricBurst';
 import HeroBackdrop from '@/components/chromatica/HeroBackdrop';
 import VoidBlobs from '@/components/chromatica/VoidBlobs';
 import VoidPreview from '@/components/chromatica/VoidPreview';
+import HoverBackdrop from '@/components/chromatica/HoverBackdrop';
 import GuideAgent from '@/components/chromatica/GuideAgent';
 
 // Drop a video at chromatica/public/hero.mp4 and uncomment the videoSrc below
@@ -84,6 +85,9 @@ export default function Chromatica() {
     <div className="relative min-h-screen w-screen chromatica-vignette overflow-hidden">
       {/* AMBIENT HERO — drifting aurora (or video, if HERO_VIDEO_SRC is set) */}
       <HeroBackdrop videoSrc={HERO_VIDEO_SRC} />
+
+      {/* HOVER BACKDROP — hovered color's photo washes the entire page */}
+      <HoverBackdrop color={hoveredColor} />
 
       {/* WHEEL — always mounted, faded by CSS when a chamber is open.
           We deliberately do NOT use AnimatePresence to swap wheel↔chamber:
@@ -192,16 +196,7 @@ export default function Chromatica() {
               onHoverColor={handleHoverColor}
               voidSlot={
                 <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                  <div
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      opacity: hoveredColor ? 0.15 : 1,
-                      transition: 'opacity 0.35s ease-out'
-                    }}
-                  >
-                    <VoidBlobs />
-                  </div>
+                  <VoidBlobs />
                   <VoidPreview color={hoveredColor} />
                 </div>
               }

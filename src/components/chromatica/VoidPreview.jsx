@@ -1,48 +1,41 @@
 import React from 'react';
 
-// Shows the hovered color's photo inside the wheel's central void.
-// Designed to be rendered inside ColorWheel's `voidSlot` (which is already
-// a circular, clipped container sized to the inner void).
-//
-// Cross-fades when the hovered color changes; fades out when nothing is hovered.
+// Inside the wheel's central void: when a color is hovered, fade up its
+// name centered in the black "mood ring" portal. The actual photo lives
+// elsewhere (HoverBackdrop) as a full-page wash. The blobs continue to
+// breathe in the void behind this label.
 export default function VoidPreview({ color }) {
   return (
     <div
       style={{
         position: 'absolute',
         inset: 0,
-        borderRadius: '50%',
-        overflow: 'hidden',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
         opacity: color ? 1 : 0,
-        transition: 'opacity 0.35s ease-out',
-        pointerEvents: 'none'
+        transition: 'opacity 0.4s ease-out',
+        pointerEvents: 'none',
+        padding: '0 18%'
       }}
     >
       {color && (
-        <>
-          <img
-            key={color.id}
-            src={color.image}
-            alt=""
-            style={{
-              position: 'absolute',
-              inset: 0,
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              filter: 'saturate(1.1) brightness(0.95)',
-              animation: 'chromatica-fade-in 0.35s ease-out'
-            }}
-          />
-          {/* subtle inner edge darken so the photo reads as held inside the portal */}
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background: 'radial-gradient(ellipse at center, transparent 55%, rgba(5,5,8,0.55) 100%)'
-            }}
-          />
-        </>
+        <div
+          key={color.id}
+          className="font-display"
+          style={{
+            textAlign: 'center',
+            color: '#F8F0E3',
+            fontSize: 'clamp(20px, 3.4vh, 36px)',
+            fontWeight: 300,
+            letterSpacing: '-0.01em',
+            lineHeight: 1.05,
+            textShadow: `0 0 32px ${color.hex}66, 0 2px 12px rgba(0,0,0,0.6)`,
+            animation: 'chromatica-fade-in 0.35s ease-out'
+          }}
+        >
+          {color.name.toLowerCase()}
+        </div>
       )}
     </div>
   );
