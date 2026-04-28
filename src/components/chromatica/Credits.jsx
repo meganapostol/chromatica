@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { PHOTO_CREDITS, PENDING_REVIEW_NAMES } from '@/data/photoCredits';
+import { markCreditsRead } from '@/lib/chromatica-achievement';
 
 export default function Credits({ onClose }) {
   // Latest-ref pattern keeps the keydown listener stable across re-renders
@@ -18,6 +19,22 @@ export default function Credits({ onClose }) {
     };
   }, []);
 
+  // Watch the scrollable credits dialog: when the user reaches the bottom,
+  // mark credits as read (other half of the rainbow-finale unlock).
+  const scrollRef = useRef(null);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const check = () => {
+      const remaining = el.scrollHeight - (el.scrollTop + el.clientHeight);
+      if (remaining < 24) markCreditsRead();
+    };
+    // If the credits already fit without scrolling, count it as read.
+    check();
+    el.addEventListener('scroll', check, { passive: true });
+    return () => el.removeEventListener('scroll', check);
+  }, []);
+
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) onClose?.();
   };
@@ -34,6 +51,7 @@ export default function Credits({ onClose }) {
       }}
     >
       <div
+        ref={scrollRef}
         role="dialog"
         aria-modal="true"
         className="relative overflow-y-auto scroll-hide"

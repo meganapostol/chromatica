@@ -13,6 +13,8 @@ import HoverBackdrop from '@/components/chromatica/HoverBackdrop';
 import GuideAgent from '@/components/chromatica/GuideAgent';
 import AudioWaveBars from '@/components/chromatica/AudioWaveBars';
 import SoundwaveRing from '@/components/chromatica/SoundwaveRing';
+import RainbowFinale from '@/components/chromatica/RainbowFinale';
+import { setTotalColors } from '@/lib/chromatica-achievement';
 
 // Drop a video at chromatica/public/hero.mp4 and uncomment the videoSrc below
 // to swap the aurora gradient for cinematic footage.
@@ -54,6 +56,9 @@ export default function Chromatica() {
     () => COLORS.map((c) => ({ ...c, image: resolveImage(c.image) })),
     []
   );
+
+  // Seed achievement tracker with the actual color count.
+  useEffect(() => { setTotalColors(colors.length); }, [colors.length]);
   const sortedByHue = useMemo(
     () => [...colors].sort((a, b) => a.hueOrder - b.hueOrder),
     [colors]
@@ -297,6 +302,10 @@ export default function Chromatica() {
 
       {/* AUDIO-WAVE BARS — only when "with music" is active */}
       <AudioWaveBars active={musicMode} />
+
+      {/* RAINBOW FINALE — fires once the user has seen every color in
+          greyscale AND scrolled to the bottom of the credits */}
+      <RainbowFinale />
     </div>
   );
 }

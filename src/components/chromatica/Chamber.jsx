@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import ChamberImage from './ChamberImage';
 import { mixWithBg } from '@/lib/chromatica-utils';
+import { markColorLost } from '@/lib/chromatica-achievement';
 
 const stagger = {
   name: 0.18,
@@ -103,6 +104,12 @@ export default function Chamber({ color, index, total, onBack, onPrev, onNext, m
   const textCardOpacity = Math.max(0, 1 - lostOpacity * 1.25);
   const textCardScale = 1 + lostOpacity * 0.08;
   const lostCardOpacity = Math.max(0, (lostOpacity - 0.55) / 0.45);
+
+  // Mark this color "seen in greyscale" once the loss card is essentially
+  // fully visible. This is half of the rainbow-finale unlock condition.
+  useEffect(() => {
+    if (lostCardOpacity > 0.95) markColorLost(color.id);
+  }, [lostCardOpacity, color.id]);
 
   return (
     <div
