@@ -148,27 +148,32 @@ const MusicPlayer = forwardRef(function MusicPlayer(props, ref) {
                 {isPlaying ? '❙❙' : '▶'}
               </PlayerBtn>
               <PlayerBtn onClick={() => changeVolume(-10)} aria-label="volume down">–</PlayerBtn>
-              <PlayerBtn onClick={() => changeVolume(10)} aria-label="volume up">+</PlayerBtn>
               <button
-                onClick={() => changeVolume(10)}
                 onWheel={(e) => { e.preventDefault(); changeVolume(e.deltaY < 0 ? 5 : -5); }}
-                aria-label={`volume ${volume} percent, scroll or click to adjust`}
-                className="ml-auto flex items-center gap-1.5 font-mono-c"
+                aria-label={`volume ${volume} percent, scroll to adjust`}
+                className="font-mono-c"
                 style={{
                   fontSize: 10,
                   color: 'rgba(250,250,250,0.7)',
                   background: 'none',
                   border: 'none',
-                  cursor: 'pointer',
+                  cursor: 'default',
                   padding: 0,
-                  lineHeight: 1
+                  lineHeight: 1,
+                  minWidth: 28,
+                  textAlign: 'center'
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(250,250,250,1)')}
-                onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(250,250,250,0.7)')}
+              >
+                {volume}%
+              </button>
+              <PlayerBtn onClick={() => changeVolume(10)} aria-label="volume up">+</PlayerBtn>
+              <span
+                aria-hidden="true"
+                className="ml-auto flex items-center"
+                style={{ color: 'rgba(250,250,250,0.7)', lineHeight: 1 }}
               >
                 <SpeakerIcon level={volume} />
-                <span>{volume}%</span>
-              </button>
+              </span>
             </div>
           </div>
         )}
