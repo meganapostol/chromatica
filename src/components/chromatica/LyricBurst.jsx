@@ -3,8 +3,9 @@ import React, { useEffect, useRef, useState } from 'react';
 // Centerpiece in the wheel's central void.
 //
 // Plays the three videos back-to-back on a perpetual loop, muted, clipped
-// inside the void circle. When a video ends — OR errors, OR stalls — the
-// next one starts immediately so it can never get stuck on a single clip.
+// inside the void circle. Simple chain: when one video ends, advance to
+// the next. No watchdog — those were the glitches (firing onStalled
+// during normal buffering and aborting playback before it could start).
 const CHORUS_VIDEOS = [
   'https://github.com/meganapostol/chromaticavidcontent/raw/refs/heads/main/Miyazaki%20(1).mp4',
   'https://github.com/meganapostol/chromaticavidcontent/raw/refs/heads/main/Untitled%20design%20(3).mp4',
@@ -14,42 +15,20 @@ const CHORUS_VIDEOS = [
 export default function LyricBurst({ voidRadius }) {
   const [videoIndex, setVideoIndex] = useState(0);
   const videoRef = useRef(null);
-  const lastTimeRef = useRef(0);
-  const stallCountRef = useRef(0);
 
   const advance = () => {
-    lastTimeRef.current = 0;
-    stallCountRef.current = 0;
     setVideoIndex((i) => (i + 1) % CHORUS_VIDEOS.length);
   };
 
-  // Watchdog: if the video's currentTime hasn't advanced for ~2s while it's
-  // supposed to be playing, skip to the next one. Covers stalled loads,
-  // decoder hiccups, network drops.
+  // If autoplay was blocked, try to resume on the first user interaction.
   useEffect(() => {
-    const id = setInterval(() => {
+    const tryPlay = () => {
       const v = videoRef.current;
-      if (!v) return;
-      // If ended but onEnded didn't fire for some reason, skip.
-      if (v.ended) { advance(); return; }
-      // If it's not paused but currentTime hasn't moved, count a stall.
-      if (!v.paused) {
-        if (v.currentTime === lastTimeRef.current) {
-          stallCountRef.current += 1;
-          // 2 consecutive stalls (~2s) — skip.
-          if (stallCountRef.current >= 2) advance();
-        } else {
-          stallCountRef.current = 0;
-          lastTimeRef.current = v.currentTime;
-        }
-      }
-      // If paused unexpectedly, try to resume.
-      if (v.paused && !v.ended) {
-        v.play().catch(() => { /* ignore — autoplay blockers, etc. */ });
-      }
-    }, 1000);
-    return () => clearInterval(id);
-  }, []);
+      if (v && v.paused) v.play().catch(() => {});
+    };
+    window.addEventListener('click', tryPlay, { once: true });
+    return () => window.removeEventListener('click', tryPlay);
+  }, [videoIndex]);
 
   const r = voidRadius;
   const diameter = r * 2;
@@ -70,15 +49,15 @@ export default function LyricBurst({ voidRadius }) {
         }}
       >
         <video
-          key={CHORUS_VIDEOS[videoIndex]}
+          key={videoIndex}
           ref={videoRef}
           src={CHORUS_VIDEOS[videoIndex]}
           autoPlay
           muted
           playsInline
+          preload="auto"
           onEnded={advance}
           onError={advance}
-          onStalled={advance}
           style={{
             width: '100%',
             height: '100%',
