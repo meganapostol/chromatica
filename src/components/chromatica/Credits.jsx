@@ -18,24 +18,61 @@ export default function Credits({ onClose }) {
     };
   }, []);
 
+  const handleBackdropClick = (e) => {
+    if (e.target === e.currentTarget) onClose?.();
+  };
+
   return (
     <div
-      className="fixed inset-0 z-[80] overflow-y-auto"
+      onClick={handleBackdropClick}
+      className="fixed inset-0 z-[80] flex items-center justify-center p-6"
       style={{
-        backgroundColor: '#050508',
-        animation: 'chromatica-fade-in 0.4s ease-out'
+        backgroundColor: 'rgba(5, 5, 8, 0.78)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        animation: 'chromatica-fade-in 0.3s ease-out'
       }}
     >
-      <button
-        type="button"
-        onClick={onClose}
-        className="fixed top-6 right-8 font-mono-c uppercase tracking-mono z-10"
-        style={{ fontSize: 11, color: 'rgba(250,250,250,0.6)' }}
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="relative overflow-y-auto scroll-hide"
+        style={{
+          width: '100%',
+          maxWidth: 760,
+          maxHeight: '88vh',
+          backgroundColor: '#0A0A0F',
+          border: '1px solid rgba(248, 240, 227, 0.14)',
+          borderRadius: 14,
+          boxShadow: '0 24px 80px rgba(0, 0, 0, 0.6)'
+        }}
       >
-        × close
-      </button>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="close credits"
+          className="sticky float-right font-mono-c uppercase tracking-mono"
+          style={{
+            top: 16,
+            right: 16,
+            marginRight: 16,
+            marginTop: 16,
+            fontSize: 11,
+            color: 'rgba(250,250,250,0.7)',
+            zIndex: 2,
+            backgroundColor: 'rgba(15, 12, 18, 0.7)',
+            border: '1px solid rgba(248, 240, 227, 0.18)',
+            borderRadius: 9999,
+            padding: '6px 14px',
+            cursor: 'pointer'
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(250,250,250,1)')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(250,250,250,0.7)')}
+        >
+          × close
+        </button>
 
-      <div className="max-w-[720px] mx-auto px-8 py-32">
+        <div className="px-10 py-16">
         <Section label="an artist's statement">
           <p className="font-display italic" style={S.note}>
             Chromatica is a love letter to the future I was promised.
@@ -153,6 +190,7 @@ export default function Credits({ onClose }) {
           >
             by Honey Digital · 2026
           </div>
+        </div>
         </div>
       </div>
     </div>
