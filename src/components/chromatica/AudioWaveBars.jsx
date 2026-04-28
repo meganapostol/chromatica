@@ -15,7 +15,7 @@ const PALETTE = [
   '#43B3AE', '#5BB7E5', '#1F4788', '#8E4585', '#DC143C'
 ];
 
-const BAR_COUNT = 64;
+const BAR_COUNT = 180;
 
 export default function AudioWaveBars({ active = true }) {
   const canvasRef = useRef(null);
@@ -58,8 +58,8 @@ export default function AudioWaveBars({ active = true }) {
       const t = (now - start) / 1000;
       ctx.clearRect(0, 0, width, height);
 
-      const gap = 3;
-      const barWidth = Math.max(2, (width - gap * (BAR_COUNT + 1)) / BAR_COUNT);
+      const gap = 2;
+      const barWidth = Math.max(1, (width - gap * (BAR_COUNT + 1)) / BAR_COUNT);
 
       for (let i = 0; i < BAR_COUNT; i++) {
         const b = bars[i];
