@@ -20,6 +20,7 @@ const BAR_COUNT = 180;
 export default function AudioWaveBars({ active = true }) {
   const canvasRef = useRef(null);
   const rafRef = useRef(null);
+  const mouseRef = useRef({ x: -9999, active: false });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -61,6 +62,11 @@ export default function AudioWaveBars({ active = true }) {
       const gap = 2;
       const barWidth = Math.max(1, (width - gap * (BAR_COUNT + 1)) / BAR_COUNT);
 
+      // Cursor influence: bars near the mouse swell, with smooth Gaussian
+      // falloff so neighbours rise too — like a wave touched by a finger.
+      const mouse = mouseRef.current;
+      const influenceRadius = 140; // px
+
       for (let i = 0; i < BAR_COUNT; i++) {
         const b = bars[i];
         // Combine two sine waves at different frequencies for a more organic
@@ -69,10 +75,23 @@ export default function AudioWaveBars({ active = true }) {
           0.5 +
           0.35 * Math.sin(t * b.freq1 + b.phase) +
           0.25 * Math.sin(t * b.freq2 + b.phase * 1.7);
-        const amp = Math.max(0.08, Math.min(1, wave * b.base + 0.25));
-        const barH = amp * (height - 14);
+        let amp = Math.max(0.08, Math.min(1, wave * b.base + 0.25));
 
         const x = gap + i * (barWidth + gap);
+
+        if (mouse.active) {
+          const barCenter = x + barWidth / 2;
+          const dist = Math.abs(barCenter - mouse.x);
+          if (dist < influenceRadius) {
+            // Gaussian-ish falloff: 1 at cursor, ~0 at radius edge.
+            const norm = dist / influenceRadius;
+            const lift = Math.exp(-norm * norm * 3) * 1.2;
+            amp = Math.min(1, amp + lift);
+          }
+        }
+
+        const barH = amp * (height - 14);
+
         const y = height - barH - 6;
 
         // Vertical gradient: bar's color → translucent same color → fade.
@@ -103,9 +122,24 @@ export default function AudioWaveBars({ active = true }) {
 
     rafRef.current = requestAnimationFrame(tick);
 
+    // Track cursor in canvas-local coordinates. We listen on window so the
+    // wave reacts even when the cursor is technically above the bars'
+    // visual band (the surrounding fade gradient).
+    const onMouseMove = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const inBand = e.clientY >= rect.top - 40 && e.clientY <= rect.bottom + 20;
+      mouseRef.current.x = e.clientX - rect.left;
+      mouseRef.current.active = inBand;
+    };
+    const onMouseLeave = () => { mouseRef.current.active = false; };
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseleave', onMouseLeave);
+
     return () => {
       cancelAnimationFrame(rafRef.current);
       window.removeEventListener('resize', resize);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseleave', onMouseLeave);
     };
   }, []);
 
