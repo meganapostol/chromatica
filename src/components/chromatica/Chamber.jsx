@@ -44,25 +44,53 @@ export default function Chamber({ color, index, total, onBack, onPrev, onNext, m
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+    // Once the user reaches the bottom, we "lock in" the greyscale fade
+    // and continue it via overscroll (wheel/touch beyond the bottom),
+    // so the educational text is fully readable in color first.
+    let overscroll = 0;
+    const OVERSCROLL_RANGE = 600; // px of extra scrolling after bottom = full grey
+
     const onScroll = () => {
       if (el.scrollTop > 8) setScrolled(true);
       const max = el.scrollHeight - el.clientHeight;
       if (max <= 0) return;
-      const raw = Math.max(0, Math.min(1, el.scrollTop / max));
-      // Stay full color until 90% scrolled, then ramp to full greyscale at 100%.
-      // The user must read all the way down before she fades.
-      const START = 0.9;
-      const p = raw <= START ? 0 : Math.min(1, (raw - START) / (1 - START));
-
-      // Scroll position is the source of truth for sat/lostOpacity once the
-      // user starts scrolling — in BOTH modes. Otherwise (with music) the
-      // timer drives values to 1 and scrolling back up can't undo it.
-      setSaturation(1 - p);
-      setLostOpacity(p);
+      // While there's still room to scroll, stay fully in color.
+      if (el.scrollTop < max - 1) {
+        overscroll = 0;
+        setSaturation(1);
+        setLostOpacity(0);
+      }
     };
+
+    const onWheel = (e) => {
+      const max = el.scrollHeight - el.clientHeight;
+      const atBottom = el.scrollTop >= max - 1;
+      if (atBottom && e.deltaY > 0) {
+        // User has read everything and is asking for "more" — fade her now.
+        overscroll = Math.min(OVERSCROLL_RANGE, overscroll + e.deltaY);
+        const p = overscroll / OVERSCROLL_RANGE;
+        setSaturation(1 - p);
+        setLostOpacity(p);
+      } else if (e.deltaY < 0 && overscroll > 0) {
+        // Scrolling back up unwinds the greyscale before re-entering the text.
+        overscroll = Math.max(0, overscroll + e.deltaY);
+        const p = overscroll / OVERSCROLL_RANGE;
+        setSaturation(1 - p);
+        setLostOpacity(p);
+      }
+    };
+
     el.addEventListener('scroll', onScroll, { passive: true });
-    return () => el.removeEventListener('scroll', onScroll);
+    el.addEventListener('wheel', onWheel, { passive: true });
+    const cleanup = () => {
+      el.removeEventListener('scroll', onScroll);
+      el.removeEventListener('wheel', onWheel);
+    };
+    // Replace the existing return so cleanup also removes the wheel handler.
+    return cleanup;
   }, [musicMode]);
+
+
 
   // Escape key
   useEffect(() => {
@@ -347,21 +375,17 @@ export default function Chamber({ color, index, total, onBack, onPrev, onNext, m
           </div>
         </div>
 
-        {/* INNER "HOW WE'RE LOSING HER" CARD — fades in once the photo is greyscale.
-            Wheel events get forwarded to the scrollable text container behind it,
-            so the user can always scroll back up. */}
+        {/* INNER "HOW WE'RE LOSING HER" CARD — fades in once the user has
+            overscrolled past the bottom of the text. Pointer-events stays
+            OFF so wheel events always reach the text container's overscroll
+            handler underneath (which is what drives the greyscale). */}
         <div
           className="absolute inset-0 flex items-center justify-center p-10 md:p-16"
-          onWheel={(e) => {
-            if (containerRef.current) {
-              containerRef.current.scrollTop += e.deltaY;
-            }
-          }}
           style={{
             zIndex: 15,
             opacity: lostCardOpacity,
             transition: 'opacity 0.5s ease-out',
-            pointerEvents: lostCardOpacity < 0.5 ? 'none' : 'auto'
+            pointerEvents: 'none'
           }}
         >
           <div
