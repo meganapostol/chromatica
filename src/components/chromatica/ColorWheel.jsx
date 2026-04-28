@@ -281,7 +281,6 @@ export default function ColorWheel({ colors = [], onSelect, exiting = false, bur
             className="chromatica-void-glow"
             style={{ mixBlendMode: 'screen', transformOrigin: `${cx}px ${cy}px` }}
           />
-          <circle cx={cx} cy={cy} r={rVoid} fill="none" stroke={CREAM} strokeWidth="1" opacity="0.22" />
         </g>
       </svg>
 
@@ -290,4 +289,3 @@ export default function ColorWheel({ colors = [], onSelect, exiting = false, bur
     </div>
   );
 }
-
