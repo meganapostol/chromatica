@@ -184,12 +184,6 @@ export default function Credits({ onClose }) {
           >
             a love letter to color, scored by a song that asked us not to take it.
           </div>
-          <div
-            className="font-mono-c uppercase tracking-mono mt-6"
-            style={{ fontSize: 11, color: 'rgba(250,250,250,0.4)' }}
-          >
-            by Honey Digital · 2026
-          </div>
         </div>
         </div>
       </div>
