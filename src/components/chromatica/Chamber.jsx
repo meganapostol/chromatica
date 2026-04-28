@@ -180,39 +180,62 @@ export default function Chamber({ color, index, total, onBack, musicMode, allCol
           chromatica · {String(index + 1).padStart(2, '0')}/30
         </div>
 
-        {/* SCROLL HINT — floats at the bottom center of the text card while
-            the user hasn't started scrolling yet. */}
-        <div
-          aria-hidden="true"
-          className="absolute pointer-events-none flex flex-col items-center gap-1.5"
-          style={{
-            zIndex: 18,
-            bottom: 22,
-            right: 0,
-            width: '50%',
-            opacity: !scrolled && textCardOpacity > 0.85 && lostOpacity < 0.05 ? 1 : 0,
-            transition: 'opacity 0.4s ease-out',
-            color: 'rgba(248, 240, 227, 0.78)',
-            animation: 'chromatica-fade-in 0.6s ease-out 0.9s both'
-          }}
-        >
-          <span
-            className="font-mono-c uppercase tracking-mono"
-            style={{ fontSize: 10 }}
-          >
-            scroll
-          </span>
-          <span
-            style={{
-              display: 'inline-block',
-              fontSize: 14,
-              lineHeight: 1,
-              animation: 'chromatica-scroll-bounce 1.6s ease-in-out infinite'
-            }}
-          >
-            ↓
-          </span>
-        </div>
+        {/* SCROLL HINT — directional. Shows ↓ at the top of the column, ↑
+            once the user has reached the greyscale "how we're losing her"
+            state. Clickable to jump to the opposite end. Hidden in the
+            middle of the journey to avoid clutter. */}
+        {(() => {
+          const showDown = !scrolled && textCardOpacity > 0.85 && lostOpacity < 0.05;
+          const showUp = lostCardOpacity > 0.6;
+          const visible = showDown || showUp;
+          const scrollToTop = () => {
+            containerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+          };
+          const scrollToBottom = () => {
+            const el = containerRef.current;
+            if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+          };
+          return (
+            <button
+              type="button"
+              onClick={showUp ? scrollToTop : scrollToBottom}
+              aria-label={showUp ? 'scroll back up' : 'scroll down'}
+              className="absolute flex flex-col items-center gap-1.5"
+              style={{
+                zIndex: 18,
+                bottom: 22,
+                right: 0,
+                width: '50%',
+                opacity: visible ? 1 : 0,
+                transition: 'opacity 0.4s ease-out, color 0.2s',
+                color: 'rgba(248, 240, 227, 0.78)',
+                background: 'none',
+                border: 'none',
+                cursor: visible ? 'pointer' : 'default',
+                pointerEvents: visible ? 'auto' : 'none'
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(248, 240, 227, 1)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(248, 240, 227, 0.78)')}
+            >
+              <span
+                className="font-mono-c uppercase tracking-mono"
+                style={{ fontSize: 10 }}
+              >
+                scroll {showUp ? 'back' : ''}
+              </span>
+              <span
+                style={{
+                  display: 'inline-block',
+                  fontSize: 14,
+                  lineHeight: 1,
+                  animation: 'chromatica-scroll-bounce 1.6s ease-in-out infinite'
+                }}
+              >
+                {showUp ? '↑' : '↓'}
+              </span>
+            </button>
+          );
+        })()}
 
         {/* TEXT GLASS CARD — overlays photo on the right, fades & scales out as you scroll */}
         <div
