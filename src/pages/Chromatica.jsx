@@ -197,9 +197,9 @@ export default function Chromatica() {
               voidSlot={
                 <div style={{ position: 'relative', width: '100%', height: '100%' }}>
                   <VoidBlobs />
-                  <VoidPreview color={hoveredColor} />
                 </div>
               }
+              voidLabelSlot={<VoidPreview color={hoveredColor} />}
               burstSlot={
                 <LyricBurst
                   images={colors.map((c) => c.image).filter(Boolean)}

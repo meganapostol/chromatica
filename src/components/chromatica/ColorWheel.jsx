@@ -26,7 +26,7 @@ function sectorPath(cx, cy, rOuter, rInner, startDeg, endDeg) {
 export const WHEEL_SIZE = 720;
 export const WHEEL_VOID_RADIUS = WHEEL_SIZE * 0.18;
 
-export default function ColorWheel({ colors = [], onSelect, exiting = false, burstSlot = null, onHoverAngle = null, onHoverColor = null, voidSlot = null }) {
+export default function ColorWheel({ colors = [], onSelect, exiting = false, burstSlot = null, onHoverAngle = null, onHoverColor = null, voidSlot = null, voidLabelSlot = null }) {
   const [hoverIdx, setHoverIdx] = useState(null);
   const [hoverAngle, setHoverAngle] = useState(null);
 
@@ -201,14 +201,16 @@ export default function ColorWheel({ colors = [], onSelect, exiting = false, bur
             }
 
             // Staggered clockwise assembly: each slab fades in 80ms after its neighbour.
-            const slabDelay = i * 0.08;
+            // CSS class + custom property keeps the animation OUT of the inline
+            // `style` object — so re-renders (e.g. hover state changes) don't
+            // re-apply the animation and re-trigger the fade-in flicker.
             return (
               <g
                 key={color.id}
+                className="chromatica-slab"
                 style={{
-                  opacity: 0,
                   transformOrigin: `${cx}px ${cy}px`,
-                  animation: `slab-assemble 0.6s cubic-bezier(0.22, 1, 0.36, 1) ${slabDelay}s forwards`
+                  '--slab-delay': `${i * 0.08}s`
                 }}
               >
                 {/* Outer luminous glow — beefier so the wheel actually radiates */}
@@ -294,6 +296,19 @@ export default function ColorWheel({ colors = [], onSelect, exiting = false, bur
 
       {/* Lyric burst overlay slot: photomontage erupts inside the void */}
       {burstSlot}
+
+      {/* Foreground label slot — renders ABOVE the SVG without any blend
+          mode so cream text stays readable on the dark void. */}
+      {voidLabelSlot && (
+        <div
+          className="absolute inset-0 pointer-events-none flex items-center justify-center"
+          style={{ zIndex: 5 }}
+        >
+          <div style={{ width: '52%', aspectRatio: '1' }}>
+            {voidLabelSlot}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
