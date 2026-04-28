@@ -68,6 +68,22 @@ export default function Chromatica() {
   const handleBack = useCallback(() => setSelectedId(null), []);
   const handleCloseCredits = useCallback(() => setCreditsOpen(false), []);
   const handleSelectCompanion = useCallback((id) => setSelectedId(id), []);
+  const handlePrev = useCallback(() => {
+    if (!sortedByHue.length) return;
+    setSelectedId((curr) => {
+      const idx = sortedByHue.findIndex((c) => c.id === curr);
+      if (idx === -1) return curr;
+      return sortedByHue[(idx - 1 + sortedByHue.length) % sortedByHue.length].id;
+    });
+  }, [sortedByHue]);
+  const handleNext = useCallback(() => {
+    if (!sortedByHue.length) return;
+    setSelectedId((curr) => {
+      const idx = sortedByHue.findIndex((c) => c.id === curr);
+      if (idx === -1) return curr;
+      return sortedByHue[(idx + 1) % sortedByHue.length].id;
+    });
+  }, [sortedByHue]);
   const enableMusic = useCallback(() => setMusicMode(true), []);
   const disableMusic = useCallback(() => setMusicMode(false), []);
   const openCredits = useCallback(() => setCreditsOpen(true), []);
@@ -81,6 +97,29 @@ export default function Chromatica() {
     document.body.style.overflow = selected ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [selected]);
+
+  // Arrow keys navigate to the previous/next color (in hue order) while
+  // a chamber is open. Wraps around at both ends. Ignored if the user is
+  // typing in an input/textarea/contenteditable element.
+  useEffect(() => {
+    if (!selected) return;
+    const onKey = (e) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      const target = e.target;
+      const tag = target?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || target?.isContentEditable) return;
+      if (sortedByHue.length === 0) return;
+      const idx = sortedByHue.findIndex((c) => c.id === selected.id);
+      if (idx === -1) return;
+      const nextIdx = e.key === 'ArrowRight'
+        ? (idx + 1) % sortedByHue.length
+        : (idx - 1 + sortedByHue.length) % sortedByHue.length;
+      e.preventDefault();
+      setSelectedId(sortedByHue[nextIdx].id);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [selected, sortedByHue]);
 
   return (
     <div className="relative min-h-screen w-screen chromatica-vignette overflow-hidden">
@@ -235,6 +274,8 @@ export default function Chromatica() {
             index={selectedIndex >= 0 ? selectedIndex : 0}
             total={30}
             onBack={handleBack}
+            onPrev={handlePrev}
+            onNext={handleNext}
             musicMode={musicMode}
             allColors={colors}
             onSelectCompanion={handleSelectCompanion}

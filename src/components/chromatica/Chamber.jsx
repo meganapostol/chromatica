@@ -18,7 +18,7 @@ const fadeUp = (delay) => ({
   animation: `chromatica-section-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) ${delay}s forwards`
 });
 
-export default function Chamber({ color, index, total, onBack, musicMode, allColors, onSelectCompanion }) {
+export default function Chamber({ color, index, total, onBack, onPrev, onNext, musicMode, allColors, onSelectCompanion }) {
   const containerRef = useRef(null);
   const [saturation, setSaturation] = useState(1);
   const [lostOpacity, setLostOpacity] = useState(0);
@@ -179,6 +179,16 @@ export default function Chamber({ color, index, total, onBack, musicMode, allCol
         >
           chromatica · {String(index + 1).padStart(2, '0')}/30
         </div>
+
+        {/* PREV / NEXT chamber arrows — anchored to the left & right outer
+            edges of the modal. Keyboard ←/→ does the same thing (handled
+            in pages/Chromatica.jsx). */}
+        {onPrev && (
+          <ChamberArrow direction="prev" onClick={onPrev} />
+        )}
+        {onNext && (
+          <ChamberArrow direction="next" onClick={onNext} />
+        )}
 
         {/* SCROLL HINT — directional. Shows ↓ at the top of the column, ↑
             once the user has reached the greyscale "how we're losing her"
@@ -401,5 +411,48 @@ function SectionLabel({ children }) {
     >
       {children}
     </div>
+  );
+}
+
+function ChamberArrow({ direction, onClick }) {
+  const isPrev = direction === 'prev';
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={isPrev ? 'previous color (←)' : 'next color (→)'}
+      title={isPrev ? 'previous color  ←' : 'next color  →'}
+      className="absolute flex items-center justify-center"
+      style={{
+        zIndex: 21,
+        top: '50%',
+        [isPrev ? 'left' : 'right']: 14,
+        transform: 'translateY(-50%)',
+        width: 42,
+        height: 42,
+        borderRadius: 9999,
+        backgroundColor: 'rgba(15, 12, 18, 0.6)',
+        border: '1px solid rgba(248, 240, 227, 0.22)',
+        color: 'rgba(248, 240, 227, 0.85)',
+        cursor: 'pointer',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        fontSize: 18,
+        lineHeight: 1,
+        transition: 'background-color 0.2s, color 0.2s, transform 0.2s'
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.backgroundColor = 'rgba(15, 12, 18, 0.9)';
+        e.currentTarget.style.color = '#FAFAFA';
+        e.currentTarget.style.transform = `translateY(-50%) translateX(${isPrev ? '-2px' : '2px'})`;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.backgroundColor = 'rgba(15, 12, 18, 0.6)';
+        e.currentTarget.style.color = 'rgba(248,240,227,0.85)';
+        e.currentTarget.style.transform = 'translateY(-50%)';
+      }}
+    >
+      {isPrev ? '←' : '→'}
+    </button>
   );
 }
