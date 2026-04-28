@@ -1,48 +1,48 @@
 import React from 'react';
 
-// Organic chromatic blob rings spinning inside the wheel's central area.
-//
-// Implementation: each blob is a span with an asymmetric border-radius
-// (the wobbly organic outline) and a RADIAL-GRADIENT background that
-// itself paints a ring of color (transparent center → colored band →
-// transparent edge). No CSS masks involved — single radial-gradient
-// background, broadly supported. Four blobs at different rotations and
-// scales overlap, screen-blended into a chromatic prism.
+// Solid chromatic blobs drifting and rotating inside the wheel's central void.
+// Each blob is a SOLID radial-gradient orb (bright core → soft transparent
+// edge) with an organic asymmetric border-radius. Multiple orbs overlap at
+// different rotations and scales, screen-blended into a chromatic prism.
+// No more donut rings. They actually look like color now.
 export default function VoidBlobs() {
-  const ring = (a, b) =>
-    `radial-gradient(circle at 50% 50%, ` +
-    `transparent 28%, ${a} 42%, ${b} 58%, ${a} 74%, transparent 92%)`;
+  // Solid orb fill: hot core in the center, fading out at the edges.
+  const orb = (a, b) =>
+    `radial-gradient(circle at 50% 50%, ${a} 0%, ${a} 25%, ${b} 55%, transparent 90%)`;
 
-  const blobStyle = {
+  const blobBase = {
     position: 'absolute',
-    inset: 0,
-    width: '100%',
-    height: '100%',
-    borderRadius: '115% 140% 145% 110% / 125% 140% 110% 125%',
+    width: '85%',
+    height: '85%',
+    borderRadius: '60% 70% 65% 55% / 65% 55% 70% 60%',
     mixBlendMode: 'screen',
-    filter: 'blur(3px)'
+    filter: 'blur(14px)'
   };
 
   const blobs = [
     {
       // warm: cinnabar / saffron
-      background: ring('#E34234', '#F2A900'),
-      transform: 'rotate(30deg) scale(1.04)'
+      background: orb('#E34234', '#F2A900'),
+      top: '5%', left: '10%',
+      animation: 'chromatica-blob-drift-a 14s ease-in-out infinite alternate'
     },
     {
       // cool: klein / maya
-      background: ring('#002FA7', '#5BB7E5'),
-      transform: 'rotate(60deg) scale(0.95)'
+      background: orb('#002FA7', '#5BB7E5'),
+      top: '15%', left: '30%',
+      animation: 'chromatica-blob-drift-b 17s ease-in-out infinite alternate'
     },
     {
       // forest: malachite / chartreuse
-      background: ring('#2E8B57', '#C0D725'),
-      transform: 'rotate(90deg) scale(0.98)'
+      background: orb('#2E8B57', '#C0D725'),
+      bottom: '8%', left: '8%',
+      animation: 'chromatica-blob-drift-c 19s ease-in-out infinite alternate'
     },
     {
       // bloom: mauveine / cochineal
-      background: ring('#8E4585', '#DC143C'),
-      transform: 'rotate(120deg) scale(1.02)'
+      background: orb('#8E4585', '#DC143C'),
+      bottom: '12%', right: '6%',
+      animation: 'chromatica-blob-drift-d 16s ease-in-out infinite alternate'
     }
   ];
 
@@ -57,24 +57,9 @@ export default function VoidBlobs() {
       }}
       aria-hidden="true"
     >
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          animation: 'chromatica-blobs-spin 18s linear infinite',
-          transformOrigin: 'center center'
-        }}
-      >
-        {blobs.map((blob, i) => (
-          <span
-            key={i}
-            style={{
-              ...blobStyle,
-              ...blob
-            }}
-          />
-        ))}
-      </div>
+      {blobs.map((blob, i) => (
+        <span key={i} style={{ ...blobBase, ...blob }} />
+      ))}
     </div>
   );
 }
