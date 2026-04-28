@@ -72,8 +72,8 @@ export default function Chamber({ color, index, total, onBack, onPrev, onNext, m
       const max = el.scrollHeight - el.clientHeight;
       if (max <= 0) return;
       const raw = Math.max(0, Math.min(1, el.scrollTop / max));
-      // Reach full reveal at ~35% of available scroll, then hold.
-      const p = Math.min(1, raw / 0.35);
+      // Reach full reveal at ~25% of available scroll, then hold.
+      const p = Math.min(1, raw / 0.25);
 
       // Scroll position is the source of truth for sat/lostOpacity once the
       // user starts scrolling — in BOTH modes. Otherwise (with music) the
@@ -257,7 +257,9 @@ export default function Chamber({ color, index, total, onBack, onPrev, onNext, m
             transform: `scale(${textCardScale})`,
             transformOrigin: 'center right',
             transition: 'opacity 0.3s ease-out, transform 0.4s ease-out',
-            pointerEvents: textCardOpacity < 0.05 ? 'none' : 'auto'
+            // Always keep pointer-events on so the user can scroll back up
+            // even after the text has fully faded out.
+            pointerEvents: 'auto'
           }}
         >
           <div
@@ -360,9 +362,16 @@ export default function Chamber({ color, index, total, onBack, onPrev, onNext, m
           </div>
         </div>
 
-        {/* INNER "HOW WE'RE LOSING HER" CARD — fades in once the photo is greyscale */}
+        {/* INNER "HOW WE'RE LOSING HER" CARD — fades in once the photo is greyscale.
+            Wheel events get forwarded to the scrollable text container behind it,
+            so the user can always scroll back up. */}
         <div
           className="absolute inset-0 flex items-center justify-center p-10 md:p-16"
+          onWheel={(e) => {
+            if (containerRef.current) {
+              containerRef.current.scrollTop += e.deltaY;
+            }
+          }}
           style={{
             zIndex: 15,
             opacity: lostCardOpacity,
