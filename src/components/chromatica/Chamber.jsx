@@ -190,7 +190,7 @@ export default function Chamber({ color, index, total, onBack, musicMode, allCol
             bottom: 22,
             right: 0,
             width: '50%',
-            opacity: !scrolled && textCardOpacity > 0.5 ? 1 : 0,
+            opacity: !scrolled && textCardOpacity > 0.5 && lostCardOpacity < 0.05 ? 1 : 0,
             transition: 'opacity 0.4s ease-out',
             color: 'rgba(248, 240, 227, 0.78)',
             animation: 'chromatica-fade-in 0.6s ease-out 0.9s both'
