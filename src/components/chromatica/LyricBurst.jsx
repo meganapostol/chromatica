@@ -1,81 +1,69 @@
 import React, { useEffect, useState, useRef } from 'react';
 
-// Centerpiece photomontage in the wheel's central void.
+// Centerpiece in the wheel's central void.
 //
-// CHORUS-ONLY. While a chorus window is active, photos strobe at ~5 cuts/sec.
-// Outside choruses the void shows the VoidBlobs instead — no slow photo
-// cycling between choruses, that read as "weird" / generative.
+// CHORUS-ONLY video montage. While a chorus window is active, ONE of the
+// three chorus videos plays (muted, looping) clipped inside the central
+// void circle. Each new chorus advances to the next video in rotation, so
+// across the three choruses you see all three.
 //
-// Tuning: the chorus windows below are GUESSES against
-// "Miyazaki (The Nature Version)" by Paris Paloma. The first chorus
-// begins on the line "I won't let you take it from me, changes the
-// colour with the air that I breathe". To capture exact timestamps,
-// click "with music", play through, and press `T` at the start and
-// end of each chorus — the values get logged to the console (and to
-// `window.__chromaticaChorusMarks`). Edit the array below to match.
+// Outside choruses the void shows the VoidBlobs instead.
+//
+// Tuning: chorus windows are GUESSES. Press `T` while music is playing
+// to log the current time and capture exact timestamps.
 export const CHORUSES = [
   { start: 48,  end: 70  },
   { start: 110, end: 132 },
   { start: 180, end: 218 }
 ];
 
-const CUT_INTERVAL_MS = 200;        // ~5 cuts/sec during chorus
-const MANUAL_BURST_MS = 3500;       // length of a 'B'-key triggered burst
+const CHORUS_VIDEOS = [
+  'https://github.com/meganapostol/chromaticavidcontent/raw/refs/heads/main/Miyazaki%20(1).mp4',
+  'https://github.com/meganapostol/chromaticavidcontent/raw/refs/heads/main/Untitled%20design%20(3).mp4',
+  'https://github.com/meganapostol/chromaticavidcontent/raw/refs/heads/main/Miyazaki%203.mp4'
+];
 
-export default function LyricBurst({ images = [], getCurrentTime, voidRadius, size = 720 }) {
+const MANUAL_BURST_MS = 6000; // length of a 'B'-key triggered burst
+
+export default function LyricBurst({ getCurrentTime, voidRadius, size = 720 }) {
   const [active, setActive] = useState(false);
-  const [imgIndex, setImgIndex] = useState(0);
-  const cutTimerRef = useRef(null);
+  const [videoIndex, setVideoIndex] = useState(0);
   const manualEndTimerRef = useRef(null);
-
-  // Helpers ------------------------------------------------------------
-  const startCutting = () => {
-    clearInterval(cutTimerRef.current);
-    setImgIndex(Math.floor(Math.random() * Math.max(images.length, 1)));
-    cutTimerRef.current = setInterval(() => {
-      setImgIndex((i) => {
-        if (!images.length) return 0;
-        return (i + 1 + Math.floor(Math.random() * (images.length - 1))) % images.length;
-      });
-    }, CUT_INTERVAL_MS);
-  };
-  const stopCutting = () => clearInterval(cutTimerRef.current);
+  const rotationRef = useRef(0); // advances each time a chorus starts
 
   // Poll the YT player time. Active iff currentTime is inside any chorus window.
   useEffect(() => {
-    if (!images.length) return;
     let manualHold = false;
+
     const poll = setInterval(() => {
       let t;
       try { t = getCurrentTime?.(); } catch { return; }
       if (manualHold) return; // manual burst takes precedence
       if (typeof t !== 'number' || isNaN(t) || t <= 0) {
-        if (active) {
-          stopCutting();
-          setActive(false);
-        }
+        if (active) setActive(false);
         return;
       }
       const inChorus = CHORUSES.some((c) => t >= c.start && t <= c.end);
       setActive((wasActive) => {
-        if (inChorus && !wasActive) startCutting();
-        if (!inChorus && wasActive) stopCutting();
+        if (inChorus && !wasActive) {
+          // Advance to next video on the rotation when a new chorus starts.
+          setVideoIndex(rotationRef.current % CHORUS_VIDEOS.length);
+          rotationRef.current += 1;
+        }
         return inChorus;
       });
     }, 150);
 
-    // 'B' = fire a manual 3.5s burst (visual test).
-    // 'T' = log the player's current time so timestamps can be captured
-    //       while listening. Logs to console + appends to
-    //       window.__chromaticaChorusMarks for easy copy-paste.
+    // 'B' = fire a manual 6s burst (visual test).
+    // 'T' = log the player's current time for capturing chorus timestamps.
     const onKey = (e) => {
       if (e.key === 'b' || e.key === 'B') {
         manualHold = true;
-        startCutting();
+        setVideoIndex(rotationRef.current % CHORUS_VIDEOS.length);
+        rotationRef.current += 1;
         setActive(true);
         clearTimeout(manualEndTimerRef.current);
         manualEndTimerRef.current = setTimeout(() => {
-          stopCutting();
           setActive(false);
           manualHold = false;
         }, MANUAL_BURST_MS);
@@ -96,46 +84,48 @@ export default function LyricBurst({ images = [], getCurrentTime, voidRadius, si
 
     return () => {
       clearInterval(poll);
-      stopCutting();
       clearTimeout(manualEndTimerRef.current);
       window.removeEventListener('keydown', onKey);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [images, getCurrentTime]);
+  }, [getCurrentTime]);
 
-  if (!active || !images.length) return null;
+  if (!active) return null;
 
-  const cx = size / 2;
-  const cy = size / 2;
   const r = voidRadius;
+  const diameter = r * 2;
 
   return (
-    <svg
-      viewBox={`0 0 ${size} ${size}`}
-      className="absolute inset-0 w-full h-full pointer-events-none"
-      style={{ overflow: 'visible' }}
+    <div
+      className="absolute inset-0 pointer-events-none flex items-center justify-center"
+      style={{ zIndex: 4 }}
+      aria-hidden="true"
     >
-      <defs>
-        <clipPath id="lyric-burst-clip">
-          <circle cx={cx} cy={cy} r={r} />
-        </clipPath>
-      </defs>
-      <g clipPath="url(#lyric-burst-clip)">
-        <image
-          href={images[imgIndex]}
-          x={cx - r}
-          y={cy - r}
-          width={r * 2}
-          height={r * 2}
-          preserveAspectRatio="xMidYMid slice"
+      <div
+        style={{
+          width: diameter,
+          height: diameter,
+          borderRadius: '50%',
+          overflow: 'hidden',
+          boxShadow: '0 0 0 1.5px rgba(250,250,250,0.55)',
+          animation: 'chromatica-fade-in 0.4s ease-out'
+        }}
+      >
+        <video
+          key={CHORUS_VIDEOS[videoIndex]}
+          src={CHORUS_VIDEOS[videoIndex]}
+          autoPlay
+          loop
+          muted
+          playsInline
           style={{
-            filter: 'saturate(1.35) brightness(1.10)',
-            animation: 'lyric-burst-flash 80ms ease-out'
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            filter: 'saturate(1.25) brightness(1.05)'
           }}
         />
-        {/* Bright ignition rim */}
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#FAFAFA" strokeWidth="1.5" opacity="0.55" />
-      </g>
-    </svg>
+      </div>
+    </div>
   );
 }
