@@ -12,6 +12,7 @@ import VoidPreview from '@/components/chromatica/VoidPreview';
 import HoverBackdrop from '@/components/chromatica/HoverBackdrop';
 import GuideAgent from '@/components/chromatica/GuideAgent';
 import AudioWaveBars from '@/components/chromatica/AudioWaveBars';
+import SoundwaveRing from '@/components/chromatica/SoundwaveRing';
 
 // Drop a video at chromatica/public/hero.mp4 and uncomment the videoSrc below
 // to swap the aurora gradient for cinematic footage.
@@ -229,7 +230,8 @@ export default function Chromatica() {
 
         {/* WHEEL — dead-centered in viewport */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="pointer-events-auto">
+          <div className="pointer-events-auto relative">
+            <SoundwaveRing active={musicMode} />
             <ColorWheel
               colors={colors}
               onSelect={handleSelect}
