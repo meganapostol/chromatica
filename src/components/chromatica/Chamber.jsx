@@ -32,34 +32,10 @@ export default function Chamber({ color, index, total, onBack, onPrev, onNext, m
     if (containerRef.current) containerRef.current.scrollTop = 0;
   }, [color.id]);
 
-  // Path 2: timer-driven (with music). Stops as soon as the user scrolls,
-  // so scroll becomes the sole driver from then on (and scrolling back up
-  // actually un-greyscales the photo).
-  useEffect(() => {
-    if (!musicMode) return;
-    if (scrolled) return;
-    const HOLD_MS = 4000;
-    const FADE_MS = 26000;
-    let start = null;
-    let raf;
-
-    const step = (t) => {
-      if (start === null) start = t;
-      const elapsed = t - start;
-      if (elapsed < HOLD_MS) {
-        setSaturation(1);
-        setLostOpacity(0);
-      } else {
-        const p = Math.min(1, (elapsed - HOLD_MS) / FADE_MS);
-        const eased = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
-        setSaturation(1 - eased);
-        setLostOpacity(eased);
-      }
-      if (elapsed < HOLD_MS + FADE_MS) raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
-  }, [color.id, musicMode, scrolled]);
+  // Greyscale is now ALWAYS scroll-driven (in both silence and music modes),
+  // so the user never loses her until they've actually read to the end.
+  // The timer-driven fade has been removed — it was racing with scroll and
+  // stripping color before the educational text was finished.
 
   // Path 1: scroll-driven (silence). Active in both modes for independent reading.
   // The user must reach the END of the text column before greyscale completes.
@@ -73,8 +49,9 @@ export default function Chamber({ color, index, total, onBack, onPrev, onNext, m
       const max = el.scrollHeight - el.clientHeight;
       if (max <= 0) return;
       const raw = Math.max(0, Math.min(1, el.scrollTop / max));
-      // Stay full color until 60% scrolled, then ramp to full greyscale at 100%.
-      const START = 0.6;
+      // Stay full color until 90% scrolled, then ramp to full greyscale at 100%.
+      // The user must read all the way down before she fades.
+      const START = 0.9;
       const p = raw <= START ? 0 : Math.min(1, (raw - START) / (1 - START));
 
       // Scroll position is the source of truth for sat/lostOpacity once the
