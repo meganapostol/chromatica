@@ -206,6 +206,17 @@ export default function Chromatica() {
             >
               progress
             </button>
+            <a
+              href="https://colourpantry.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono-c uppercase tracking-mono"
+              style={{ fontSize: 11, color: 'rgba(248,240,227,0.7)', textDecoration: 'none' }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(248,240,227,1)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(248,240,227,0.7)')}
+            >
+              colour pantry ↗
+            </a>
             <button
               type="button"
               onClick={openCredits}
