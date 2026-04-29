@@ -83,8 +83,8 @@ const MusicPlayer = forwardRef(function MusicPlayer(props, ref) {
       <div id="yt-player" style={{ position: 'absolute', top: -9999, left: -9999, width: 1, height: 1 }} />
 
       <div
-        className="fixed z-50"
-        style={{ top: 16, left: 24 }}
+        className="fixed z-50 flex items-center gap-3"
+        style={{ top: 22, left: 24, height: 40 }}
       >
         {collapsed ? (
           <button
@@ -106,77 +106,108 @@ const MusicPlayer = forwardRef(function MusicPlayer(props, ref) {
           </button>
         ) : (
           <div
+            className="flex items-center gap-3"
             style={{
-              width: 280,
-              padding: 16,
-              borderRadius: 12,
+              height: 40,
+              padding: '0 14px',
+              borderRadius: 9999,
               backgroundColor: 'rgba(10, 10, 15, 0.7)',
               backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
               border: '1px solid rgba(250,250,250,0.15)'
             }}
           >
-            <div className="flex items-start justify-between mb-2">
-              <div
-                className="font-mono-c uppercase tracking-mono"
-                style={{ fontSize: 9, color: 'rgba(250,250,250,0.4)' }}
-              >
-                now playing
-              </div>
-              <button
-                onClick={() => setCollapsed(true)}
-                aria-label="collapse player"
-                style={{ color: 'rgba(250,250,250,0.5)', fontSize: 12, lineHeight: 1 }}
-              >
-                —
-              </button>
-            </div>
-            <div
-              className="font-display italic"
-              style={{ fontSize: 12, color: '#FAFAFA' }}
-            >
-              Miyazaki (Nature Version)
-            </div>
-            <div
-              className="font-mono-c"
-              style={{ fontSize: 10, color: 'rgba(250,250,250,0.6)', marginTop: 2 }}
-            >
-              Paris Paloma & NATURE
-            </div>
+            <PlayerBtn onClick={togglePlay} aria-label={isPlaying ? 'pause' : 'play'}>
+              {isPlaying ? '❙❙' : '▶'}
+            </PlayerBtn>
 
-            <div className="flex items-center gap-5 mt-3">
-              <PlayerBtn onClick={togglePlay} aria-label={isPlaying ? 'pause' : 'play'}>
-                {isPlaying ? '❙❙' : '▶'}
-              </PlayerBtn>
-              <PlayerBtn onClick={() => changeVolume(-10)} aria-label="volume down">–</PlayerBtn>
-              <button
-                onWheel={(e) => { e.preventDefault(); changeVolume(e.deltaY < 0 ? 5 : -5); }}
-                aria-label={`volume ${volume} percent, scroll to adjust`}
-                className="font-mono-c"
-                style={{
-                  fontSize: 10,
-                  color: 'rgba(250,250,250,0.7)',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'default',
-                  padding: 0,
-                  lineHeight: 1,
-                  minWidth: 28,
-                  textAlign: 'center'
-                }}
-              >
-                {volume}%
-              </button>
-              <PlayerBtn onClick={() => changeVolume(10)} aria-label="volume up">+</PlayerBtn>
+            <div className="flex flex-col" style={{ lineHeight: 1.1, maxWidth: 180 }}>
               <span
-                aria-hidden="true"
-                className="ml-auto flex items-center"
-                style={{ color: 'rgba(250,250,250,0.7)', lineHeight: 1 }}
+                className="font-display italic truncate"
+                style={{ fontSize: 12, color: '#FAFAFA' }}
               >
-                <SpeakerIcon level={volume} />
+                Miyazaki (Nature Version)
+              </span>
+              <span
+                className="font-mono-c truncate"
+                style={{ fontSize: 9, color: 'rgba(250,250,250,0.55)' }}
+              >
+                Paris Paloma & NATURE
               </span>
             </div>
+
+            <span style={{ width: 1, height: 18, backgroundColor: 'rgba(250,250,250,0.15)' }} />
+
+            <PlayerBtn onClick={() => changeVolume(-10)} aria-label="volume down">–</PlayerBtn>
+            <button
+              onWheel={(e) => { e.preventDefault(); changeVolume(e.deltaY < 0 ? 5 : -5); }}
+              aria-label={`volume ${volume} percent, scroll to adjust`}
+              className="font-mono-c"
+              style={{
+                fontSize: 10,
+                color: 'rgba(250,250,250,0.7)',
+                background: 'none',
+                border: 'none',
+                cursor: 'default',
+                padding: 0,
+                lineHeight: 1,
+                minWidth: 28,
+                textAlign: 'center'
+              }}
+            >
+              {volume}%
+            </button>
+            <PlayerBtn onClick={() => changeVolume(10)} aria-label="volume up">+</PlayerBtn>
+            <span
+              aria-hidden="true"
+              className="flex items-center"
+              style={{ color: 'rgba(250,250,250,0.7)', lineHeight: 1 }}
+            >
+              <SpeakerIcon level={volume} />
+            </span>
+
+            <button
+              onClick={() => setCollapsed(true)}
+              aria-label="collapse player"
+              style={{
+                marginLeft: 4,
+                color: 'rgba(250,250,250,0.5)',
+                fontSize: 14,
+                lineHeight: 1,
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(250,250,250,1)')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(250,250,250,0.5)')}
+            >
+              ×
+            </button>
           </div>
         )}
+
+        <a
+          href="https://colourpantry.vercel.app/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-mono-c uppercase tracking-mono flex items-center"
+          style={{
+            height: 40,
+            padding: '0 14px',
+            borderRadius: 9999,
+            fontSize: 11,
+            color: 'rgba(248,240,227,0.75)',
+            textDecoration: 'none',
+            backgroundColor: 'rgba(10, 10, 15, 0.7)',
+            border: '1px solid rgba(250,250,250,0.15)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)'
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(248,240,227,1)')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(248,240,227,0.75)')}
+        >
+          colour pantry ↗
+        </a>
       </div>
     </>
   );

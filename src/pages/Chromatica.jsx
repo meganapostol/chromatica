@@ -136,31 +136,7 @@ export default function Chromatica() {
       {/* AMBIENT HERO — drifting aurora (or video, if HERO_VIDEO_SRC is set) */}
       <HeroBackdrop videoSrc={HERO_VIDEO_SRC} />
 
-      {/* External link to Colour Pantry — top-left, sits just below the music player */}
-      <a
-        href="https://colourpantry.vercel.app/"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed font-mono-c uppercase tracking-mono"
-        style={{
-          top: 130,
-          left: 24,
-          zIndex: 60,
-          fontSize: 11,
-          color: 'rgba(248,240,227,0.75)',
-          textDecoration: 'none',
-          padding: '7px 14px',
-          borderRadius: 9999,
-          backgroundColor: 'rgba(15, 12, 18, 0.65)',
-          border: '1px solid rgba(248, 240, 227, 0.18)',
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)'
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = 'rgba(248,240,227,1)')}
-        onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(248,240,227,0.75)')}
-      >
-        colour pantry ↗
-      </a>
+
 
       {/* HOVER BACKDROP — hovered color's photo washes the entire page */}
       <HoverBackdrop color={hoveredColor} />
